@@ -3,7 +3,6 @@
   <div class="video-container">
     <video
         :id="videoId"
-        style="width: 100%;height: 100%;"
         :class="className"
         preload="auto"
         h5-playsinline
@@ -12,6 +11,33 @@
     >
       <source :src="videoUrl" type="application/x-mpegURL"/>
     </video>
+<!--    <van-tabbar v-model="active" @change="onChange">-->
+<!--      <van-tabbar-item icon="home-o">标签</van-tabbar-item>-->
+<!--      <van-tabbar-item icon="search">标签</van-tabbar-item>-->
+<!--      <van-tabbar-item icon="friends-o">标签</van-tabbar-item>-->
+<!--      <van-tabbar-item icon="setting-o">标签</van-tabbar-item>-->
+<!--    </van-tabbar>-->
+    <van-popup
+        v-model="show"
+        round
+        position="bottom"
+        :style="{ height: '30%' }"
+        @close="closePopup"
+    >
+      <van-form @submit="onSubmit">
+        <van-field
+            v-model="updateVideoUrl"
+            name="地址"
+            label="地址"
+            clearable
+            placeholder="地址"
+            :rules="[{ required: true, message: '请填写地址' }]"
+        />
+        <div style="margin: 16px;">
+          <van-button round block type="info" native-type="submit">确定</van-button>
+        </div>
+      </van-form>
+    </van-popup>
   </div>
 </template>
 <script>
@@ -27,7 +53,11 @@ export default {
   name: 'index',
   data () {
     return {
+      active: 0,
+      show: false,
       imgUrl: imgUrl,
+      updateVideoUrl: '',
+      videoUrl: 'https://live-play.cctvnews.cctv.com/cctv/merge_cctv13.m3u8',
       player: null,
       className: [
         'video-js',
@@ -45,17 +75,19 @@ export default {
     videoId: {
       type: String,
       default: 'videoId'
-    },
-    videoUrl: {
-      type: String,
-      default: 'https://live-play.cctvnews.cctv.com/cctv/merge_cctv13.m3u8'
-      // default: vidUrl
-      // default: 'https://vjs.zencdn.net/v/oceans.mp4'
     }
+    // videoUrl: {
+    //   type: String,
+    //   default: 'https://live-play.cctvnews.cctv.com/cctv/merge_cctv13.m3u8'
+    //   // default: vidUrl
+    //   // default: 'https://vjs.zencdn.net/v/oceans.mp4'
+    // }
   },
   mounted () {
-    this.init();
-    this.updateUrl();
+    this.$nextTick(() => {
+      this.init();
+      // this.updateUrl();
+    });
   },
   methods: {
     init () {
@@ -93,7 +125,7 @@ export default {
           FullscreenToggle: true // 全屏
         },
         playbackRates: [0.5, 1, 1.5, 2],
-        liveDisplay: true,
+        liveDisplay: false,
         liveui: true,
         preferFullWindow: true,
         // LiveDisplay: true, // 是否显示直播文字图标
@@ -104,9 +136,13 @@ export default {
         // this.play() // 自动播放
       });
       this.$nextTick(() => {
-        this.addMenu();
+        // this.addMenu();
         this.addButton();
+        this.updateUrl();
       });
+    },
+    onChange (index) {
+      console.log('index', index);
     },
     /**
      * @Description 添加menu菜单
@@ -142,6 +178,14 @@ export default {
       this.player.myMenuButton = myMenuButton;
       this.player.controlBar.addChild(myMenuButton);
     },
+    onSubmit () {
+      this.show = false;
+      this.videoUrl = this.updateVideoUrl;
+      console.log('videoUrl', this.videoUrl);
+
+      this.player.src(this.videoUrl);
+      this.player.play();
+    },
     /**
      * @Description 添加按钮
      * @author wangkangzhang
@@ -155,10 +199,20 @@ export default {
         clickHandler: (event) => {
           // 点击函数
           console.log('aaaaaaaaaaaaaa');
+          this.show = true;
+          this.updateVideoUrl = this.videoUrl;
           // this.$videojs.log('Clicked');
         }
       });
       this.player.getChild('ControlBar').addChild(button);
+    },
+    /** 关闭弹出触发
+     * @param e
+     * @param item
+     */
+    closePopup () {
+      this.show = false;
+      console.log(996969696969);
     },
     setShowPercent (e, item) {
       console.log('e', e);
@@ -181,10 +235,16 @@ export default {
 <style lang="scss" scoped>
 .video-container {
   width: 100%;
-  height: 100%;
+  //height: 100%;
+  height: 100vh;
   /* 将videojs  视频铺满容器 */
-  .video-js .vjs-tech {
-    object-fit: fill;
+  //.video-js .vjs-tech {
+  //  object-fit: fill;
+  //}
+  .video-js {
+    width: 100%;
+   //height: calc(100% - 50px);
+   height: 100%;
   }
 
 }
@@ -222,8 +282,9 @@ export default {
       height: 100%;
       width: 100%;
       &::before {
-        content: "\e798";
-        font-family: element-icons;
+        content: '\e73b';
+        //font-family: element-icons;
+        font-family: vant-icon;
         position: absolute;
         top: 0;
         left: 0;
