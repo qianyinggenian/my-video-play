@@ -1,14 +1,25 @@
 <template>
-<div><van-button type="primary">主要按钮</van-button>
-222222222</div>
+<div class="container">
+  <video-play></video-play>
+</div>
 </template>
 
 <script>
+import videoPlay from '@/components/videoPlay/index.vue';
 export default {
-  name: 'index'
+  name: 'index',
+  components: {
+    videoPlay
+  },
+  data () {
+    return {};
+  }
 };
 </script>
 
-<style scoped>
-
+<style lang="scss" scoped>
+.container {
+  width: 100%;
+  height: 100%;
+}
 </style>

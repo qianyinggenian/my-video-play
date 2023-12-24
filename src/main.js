@@ -3,6 +3,7 @@ import App from './App.vue';
 import 'babel-polyfill';
 import router from './router';
 import store from './store';
+import '@/css/index.scss';
 import Vant from 'vant';
 import './components/index.js';
 import '@/common/icons/index';
