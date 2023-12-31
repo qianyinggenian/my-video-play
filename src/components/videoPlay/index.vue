@@ -1,38 +1,37 @@
 <template>
-<!--  视频组件-->
-  <div class="video-container">
+  <!--  视频组件-->
+  <div class="video-container" :class="{'fullTransform': isFullTransform}">
     <video
+        ref="myVideo"
         :id="videoId"
         :class="className"
         preload="auto"
-        h5-playsinline
-        x5-video-player-fullscreen="true"
         :poster="imgUrl"
+        x-webkit-airplay="allow"
+        x5-video-player-type="h5"
+        x5-video-player-fullscreen="false"
+        x5-video-orientation="landscape"
+        webkit-playsinline="true"
+        playsinline="true"
     >
       <source :src="videoUrl" type="application/x-mpegURL"/>
     </video>
-<!--    <van-tabbar v-model="active" @change="onChange">-->
-<!--      <van-tabbar-item icon="home-o">标签</van-tabbar-item>-->
-<!--      <van-tabbar-item icon="search">标签</van-tabbar-item>-->
-<!--      <van-tabbar-item icon="friends-o">标签</van-tabbar-item>-->
-<!--      <van-tabbar-item icon="setting-o">标签</van-tabbar-item>-->
-<!--    </van-tabbar>-->
     <van-popup
         v-model="show"
         round
         position="bottom"
-        :style="{ height: '30%' }"
+        :style="{ height: '50%' }"
         @close="closePopup"
     >
       <van-form @submit="onSubmit">
-        <van-field
-            v-model="updateVideoUrl"
-            name="地址"
-            label="地址"
-            clearable
-            placeholder="地址"
-            :rules="[{ required: true, message: '请填写地址' }]"
-        />
+        <van-tree-select
+            :items="defaultList"
+            :active-id.sync="activeId"
+            :main-active-index.sync="activeIndex"
+            @click-nav="clickNav"
+            @click-item="clickItem"
+        >
+        </van-tree-select>
         <div style="margin: 16px;">
           <van-button round block type="info" native-type="submit">确定</van-button>
         </div>
@@ -41,14 +40,16 @@
   </div>
 </template>
 <script>
+import axios from 'axios';
 import 'video.js/dist/video-js.css';
 import imgUrl from './images/oceans.png';
 // import videojs from 'video.js'
 import 'videojs-contrib-hls';
 import '@videojs/http-streaming';
-// import videoZhCN from 'video.js/dist/lang/zh-CN.json';
-// videojs.addLanguage('zh-CN', videoZhCN);
-// const vidUrl = require('./vid/1.mp4');
+// import 'videojs-youtube';
+// import 'videojs-landscape-fullscreen';
+import { defaultList } from '@/components/videoPlay/list';
+
 export default {
   name: 'index',
   data () {
@@ -56,14 +57,23 @@ export default {
       active: 0,
       show: false,
       imgUrl: imgUrl,
+      activeId: 1,
+      activeIndex: 0,
       updateVideoUrl: '',
-      videoUrl: 'https://live-play.cctvnews.cctv.com/cctv/merge_cctv13.m3u8',
+      activeItem: {},
+      // videoUrl: 'https://live-play.cctvnews.cctv.com/cctv/merge_cctv13.m3u8',
+      // videoUrl: 'https://cfss.cc/ds/ysp/qp.php?id=cctv1&key=51397&Cf.m3u8',
+      videoUrl: '',
       player: null,
+      defaultList: defaultList,
+      isFullTransform: false,
       className: [
         'video-js',
         'vjs-default-skin',
         'vjs-big-play-centered',
-        'vjs-visible-text'
+        'vjs-visible-text',
+        'vjs-sublime-skin',
+        'vjs-fluid'
       ],
       listUrl: [
         'http://cfss.cc/api/ysp/cctv1.m3u8',
@@ -76,28 +86,76 @@ export default {
       type: String,
       default: 'videoId'
     }
-    // videoUrl: {
-    //   type: String,
-    //   default: 'https://live-play.cctvnews.cctv.com/cctv/merge_cctv13.m3u8'
-    //   // default: vidUrl
-    //   // default: 'https://vjs.zencdn.net/v/oceans.mp4'
-    // }
   },
   mounted () {
     this.$nextTick(() => {
       this.init();
-      // this.updateUrl();
     });
+    this.setOrientation(); // 初始化时设置视频方向
+    window.addEventListener('orientationchange', () => {
+      this.setOrientation(); // 当手机方向改变时重新设置视频方向
+    });
+    // this.fetchFileContent();
   },
   methods: {
+    setOrientation () {
+      // const video = this.$refs.myVideo;
+      // console.log(video);
+      if (window.matchMedia('(orientation: portrait)').matches) {
+        // 如果是竖屏模式
+        // alert('旋转竖屏');
+        // console.log('竖屏');
+        // video.style.width = '100%';
+        // video.style.height = 'auto';
+      } else {
+        console.log('横屏');
+        // alert('旋转横屏模式');
+        // 如果是横屏模式
+        // video.style.width = '';
+        // video.style.height = '';
+      }
+    },
+    fetchFileContent () {
+      const t = new Date().getTime();
+      const fileUrl = `api/v5/repos/wkz_gitee/yuan/contents/video-play.json?access_token=8592859e7e54a38c469c554361fd8b54&t=${t}`;
+      axios({
+        method: 'get',
+        timeout: 6000,
+        baseURL: 'https://gitee.com/',
+        responseType: 'json', // default
+        url: fileUrl
+      })
+        .then((response) => {
+          const decodedText = atob(response.data.content); // 解码得到明文
+          console.log('decodedText', JSON.parse(decodedText)); // 输出结果：Hello World!
+          this.defaultList = JSON.parse(decodedText).list;
+          this.$nextTick(() => {
+            this.videoUrl = this.defaultList[0].children[0];
+            console.log('aaa', this.videoUrl);
+            this.init();
+          });
+          // 这里可以对返回的文件内容进行处理
+        }).catch((error) => {
+          console.error('获取文件失败:', error);
+        });
+    },
     init () {
       // 播放器初始化
+      const that = this;
       this.player = this.$videojs(this.videoId, {
         language: 'zh-CN',
+        // techOrder: ['youtube'],
         autoplay: false,
         bigPlayButton: true,
         posterImage: false,
         errorDisplay: false,
+        sources: [
+          {
+            // type: 'application/x-mpegURL',
+            src: 'https://live-play.cctvnews.cctv.com/cctv/merge_cctv13.m3u8' // 你的m3u8地址（必填）
+            // src: 'https://cfss.cc/ds/ysp/qp.php?id=cctv1&key=51397&Cf.m3u8' // 你的m3u8地址（必填）
+          }
+        ],
         controlBar: { // 总控制条
           // 这里可以自己控制各小组件的顺序和显示方式
           children: [
@@ -132,23 +190,54 @@ export default {
         controls: true, // 是否显示控件
         loop: true, // 循环播放
         muted: true // 静音模式 、、 解决首次页面加载播放。
-      }, function () {
-        // this.play() // 自动播放
+      }, function onPlayerReady () {
+        // const that = this;
+        this.on('fullscreenchange', () => {
+          if (this.isFullscreen()) {
+            this.enterFullWindow();
+            that.isFullTransform = true;
+            // that.player.landscapeFullscreen();
+          } else {
+            that.isFullTransform = false;
+            this.exitFullWindow();
+          }
+        });
       });
       this.$nextTick(() => {
         // this.addMenu();
         this.addButton();
         this.updateUrl();
+        // this.fetchFileContent();
       });
     },
-    onChange (index) {
-      console.log('index', index);
+    fn () {
+      console.log('isFullTransform', this.isFullTransform);
+      // var body = document.getElementsByTagName('body')[0];
+      // var html = document.getElementsByTagName('html')[0];
+      // var width = html.clientWidth;
+      // var height = html.clientHeight;
+      // var max = width > height ? width : height;
+      // var min = width > height ? height : width;
+      // body.style.width = max + 'px';
+      // body.style.height = min + 'px';
+      // console.log('height', height);
+      // console.log('width', width);
+      // console.log('body', body);
+      // const video = this.$refs.myVideo;
+      // console.log('style', video.style);
+    },
+    clickNav (index) {
+      this.activeItem = this.defaultList[index].children[0];
+    },
+    clickItem (item) {
+      console.log('item', item);
+      this.activeItem = item;
     },
     /**
      * @Description 添加menu菜单
      * @author wangkangzhang
      * @date 2023/12/22
-    */
+     */
     addMenu () {
       const MenuButton = this.$videojs.getComponent('MenuButton');
       const Menu = this.$videojs.getComponent('Menu');
@@ -180,17 +269,18 @@ export default {
     },
     onSubmit () {
       this.show = false;
-      this.videoUrl = this.updateVideoUrl;
-      console.log('videoUrl', this.videoUrl);
-
-      this.player.src(this.videoUrl);
+      this.videoUrl = this.activeItem.url;
+      this.player.src({
+        type: 'application/x-mpegURL',
+        src: this.videoUrl
+      });
       this.player.play();
     },
     /**
      * @Description 添加按钮
      * @author wangkangzhang
      * @date 2023/12/22
-    */
+     */
     addButton () {
       const Button = this.$videojs.getComponent('Button');
       const button = new Button(this.player, {
@@ -220,8 +310,20 @@ export default {
     },
     //  修改video的src
     updateUrl () {
-      this.player.src(this.videoUrl);
-      // this.player.play()
+      console.log(1111111111);
+      console.log('player', this.player);
+      this.videoUrl = this.defaultList[0].children[0].url;
+      // console.log('videoUrl', this.videoUrl);
+      this.player.src({
+        type: 'application/x-mpegURL',
+        src: this.videoUrl
+      });
+      this.player.play();
+      // this.player.fullscreen({
+      //   enterOnRotate: true, // 是否支持旋转设备进入全屏模式
+      //   iOS: true, // 是否支持iOS系统
+      //   iOSNative: false // 是否使用原生iOS全屏模式
+      // });
     }
   },
   beforeDestroy () {
@@ -243,9 +345,12 @@ export default {
   //}
   .video-js {
     width: 100%;
-   //height: calc(100% - 50px);
-   height: 100%;
+    //height: calc(100% - 50px);
+    height: 100%;
   }
+  //.vjs-tech {
+  //    object-fit: cover;
+  //  }
 
 }
 ::v-deep .video-js .vjs-big-play-button {
@@ -311,4 +416,34 @@ export default {
     }
   }
 }
+.vjs-paused .vjs-big-play-button,
+.vjs-paused.vjs-has-started .vjs-big-play-button {
+  display: block;
+}
+
+.video-js.vjs-playing .vjs-tech {
+  pointer-events: auto;
+}
+
+.fullTransform {
+  transform: rotate(90deg);
+  transform-origin: 50vw 50vw;
+}
+
+::v-deep .van-form {
+  height: 100%;
+  .van-tree-select {
+    height: calc(100% - 76px) !important;
+    .van-tree-select__content {
+      flex: 1 !important;
+      -webkit-box-flex: 1 !important;
+      -webkit-flex: 1 !important;
+    }
+  }
+}
+//@media screen and (max-aspect-ratio: 9/16) {
+//  .video-container {
+//    //background-color: red; /* 横屏模式下的背景色 */
+//  }
+//}
 </style>

@@ -13,12 +13,15 @@
   "dependencies": {
     "@videojs/http-streaming": "^2.16.2",
     "animate.css": "^4.1.1",
+    "axios": "^1.6.3",
     "babel-polyfill": "^6.26.0",
     "core-js": "^3.8.3",
     "js-cookie": "^3.0.5",
     "vant": "^2.13.2",
     "video.js": "^8.3.0",
     "videojs-contrib-hls": "^5.15.0",
+    "videojs-landscape-fullscreen": "^11.1111.0",
+    "videojs-youtube": "^3.0.1",
     "vue": "^2.6.14",
     "vue-router": "3.2.0",
     "vuex": "3.4.0"
