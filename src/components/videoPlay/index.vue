@@ -437,11 +437,9 @@ export default {
       width: 100%;
       &::before {
         content: '\e6b4';
-        color: white;
-        //font-family: element-icons;
+        //color: white;
         font-family: vant-icon;
         position: absolute;
-        //background: url('./images/旋转.png');
         top: 0;
         left: 0;
         width: 100%;
