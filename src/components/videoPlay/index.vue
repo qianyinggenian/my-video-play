@@ -1,43 +1,44 @@
 <template>
   <!--  视频组件-->
-  <div class="video-container" :class="{'fullTransform': isFullTransform}">
-    <video
-        ref="myVideo"
-        :id="videoId"
-        :class="className"
-        preload="auto"
-        :poster="imgUrl"
-        x-webkit-airplay="allow"
-        x5-video-player-type="h5"
-        x5-video-player-fullscreen="false"
-        x5-video-orientation="landscape"
-        webkit-playsinline="true"
-        playsinline="true"
-    >
-      <source :src="videoUrl" type="application/x-mpegURL"/>
-    </video>
-    <van-popup
-        v-model="show"
-        round
-        position="bottom"
-        :style="{ height: '50%' }"
-        @close="closePopup"
-    >
-      <van-form @submit="onSubmit">
-        <van-tree-select
-            :items="defaultList"
-            :active-id.sync="activeId"
-            :main-active-index.sync="activeIndex"
-            @click-nav="clickNav"
-            @click-item="clickItem"
-        >
-        </van-tree-select>
-        <div style="margin: 16px;">
-          <van-button round block type="info" native-type="submit">确定</van-button>
-        </div>
-      </van-form>
-    </van-popup>
-  </div>
+    <div class="video-container" :class="{'fullTransform': isFullTransform}">
+      <video
+          ref="myVideo"
+          :id="videoId"
+          :class="className"
+          preload="auto"
+          :poster="imgUrl"
+      >
+
+        <!--      x-webkit-airplay="allow"-->
+        <!--      x5-video-player-type="h5"-->
+        <!--      x5-video-player-fullscreen="false"-->
+        <!--      x5-video-orientation="landscape"-->
+        <!--      webkit-playsinline="true"-->
+        <!--      playsinline="true"-->
+        <source :src="videoUrl" type="application/x-mpegURL"/>
+      </video>
+      <van-popup
+          v-model="show"
+          round
+          position="bottom"
+          :style="{ height: '50%' }"
+          @close="closePopup"
+      >
+        <van-form @submit="onSubmit">
+          <van-tree-select
+              :items="defaultList"
+              :active-id.sync="activeId"
+              :main-active-index.sync="activeIndex"
+              @click-nav="clickNav"
+              @click-item="clickItem"
+          >
+          </van-tree-select>
+          <div style="margin: 16px;">
+            <van-button round block type="info" native-type="submit">确定</van-button>
+          </div>
+        </van-form>
+      </van-popup>
+    </div>
 </template>
 <script>
 import axios from 'axios';
@@ -67,6 +68,7 @@ export default {
       player: null,
       defaultList: defaultList,
       isFullTransform: false,
+      isFull: false,
       className: [
         'video-js',
         'vjs-default-skin',
@@ -98,6 +100,9 @@ export default {
     // this.fetchFileContent();
   },
   methods: {
+    transformFn () {
+      this.isFullTransform = !this.isFullTransform;
+    },
     setOrientation () {
       // const video = this.$refs.myVideo;
       // console.log(video);
@@ -180,13 +185,13 @@ export default {
           playbackRate: true,
           remainingTimeDisplay: true,
           PictureInPictureToggle: true, // 画中画
-          FullscreenToggle: true // 全屏
+          FullscreenToggle: false // 全屏
         },
         playbackRates: [0.5, 1, 1.5, 2],
         liveDisplay: false,
         liveui: true,
         preferFullWindow: true,
-        // LiveDisplay: true, // 是否显示直播文字图标
+        LiveDisplay: false, // 是否显示直播文字图标
         controls: true, // 是否显示控件
         loop: true, // 循环播放
         muted: true // 静音模式 、、 解决首次页面加载播放。
@@ -206,25 +211,21 @@ export default {
       this.$nextTick(() => {
         // this.addMenu();
         this.addButton();
+        this.addButtonFull();
         this.updateUrl();
         // this.fetchFileContent();
       });
     },
     fn () {
-      console.log('isFullTransform', this.isFullTransform);
-      // var body = document.getElementsByTagName('body')[0];
-      // var html = document.getElementsByTagName('html')[0];
-      // var width = html.clientWidth;
-      // var height = html.clientHeight;
-      // var max = width > height ? width : height;
-      // var min = width > height ? height : width;
-      // body.style.width = max + 'px';
-      // body.style.height = min + 'px';
-      // console.log('height', height);
-      // console.log('width', width);
-      // console.log('body', body);
-      // const video = this.$refs.myVideo;
-      // console.log('style', video.style);
+      const app = document.querySelector('.video-container');
+      const body = app;
+      const width = body.clientWidth;
+      const height = body.clientHeight;
+      const max = height;
+      const min = width;
+      app.style.width = max + 'px';
+      app.style.height = min + 'px';
+      this.isFullTransform = !this.isFullTransform;
     },
     clickNav (index) {
       this.activeItem = this.defaultList[index].children[0];
@@ -288,10 +289,27 @@ export default {
         controlText: '列表',
         clickHandler: (event) => {
           // 点击函数
-          console.log('aaaaaaaaaaaaaa');
           this.show = true;
           this.updateVideoUrl = this.videoUrl;
-          // this.$videojs.log('Clicked');
+        }
+      });
+      this.player.getChild('ControlBar').addChild(button);
+    },
+    /**
+     * @Description 添加按钮
+     * @author wangkangzhang
+     * @date 2023/12/22
+     */
+    addButtonFull () {
+      const Button = this.$videojs.getComponent('Button');
+      const button = new Button(this.player, {
+        className: 'vjs-visible-text custom-full',
+        controlText: '全屏',
+        clickHandler: (event) => {
+          // 点击函数
+
+          this.isFull = !this.isFull;
+          this.fn();
         }
       });
       this.player.getChild('ControlBar').addChild(button);
@@ -302,7 +320,6 @@ export default {
      */
     closePopup () {
       this.show = false;
-      console.log(996969696969);
     },
     setShowPercent (e, item) {
       console.log('e', e);
@@ -310,10 +327,7 @@ export default {
     },
     //  修改video的src
     updateUrl () {
-      console.log(1111111111);
-      console.log('player', this.player);
       this.videoUrl = this.defaultList[0].children[0].url;
-      // console.log('videoUrl', this.videoUrl);
       this.player.src({
         type: 'application/x-mpegURL',
         src: this.videoUrl
@@ -337,8 +351,8 @@ export default {
 <style lang="scss" scoped>
 .video-container {
   width: 100%;
-  //height: 100%;
-  height: 100vh;
+  height: 100%;
+  //height: 100vh;
   /* 将videojs  视频铺满容器 */
   //.video-js .vjs-tech {
   //  object-fit: fill;
@@ -391,6 +405,43 @@ export default {
         //font-family: element-icons;
         font-family: vant-icon;
         position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+    }
+    &:last-child {
+      display: none;
+    }
+  }
+}
+::v-deep .custom-full {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  text-align: center;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 4em !important;
+  span {
+    &:first-child {
+      position: relative;
+      font-family: VideoJS;
+      font-weight: normal;
+      font-style: normal;
+      height: 100%;
+      width: 100%;
+      &::before {
+        content: '\e6b4';
+        color: white;
+        //font-family: element-icons;
+        font-family: vant-icon;
+        position: absolute;
+        //background: url('./images/旋转.png');
         top: 0;
         left: 0;
         width: 100%;
