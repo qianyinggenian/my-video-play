@@ -122,7 +122,10 @@ export default {
     },
     fetchFileContent () {
       const t = new Date().getTime();
-      const fileUrl = `api/v5/repos/wkz_gitee/yuan/contents/video-play.json?access_token=8592859e7e54a38c469c554361fd8b54&t=${t}`;
+      // const fileUrl = `api/v5/repos/wkz_gitee/yuan/contents/video-play.json?access_token=8592859e7e54a38c469c554361fd8b54&t=${t}`;
+      // const fileUrl = `api/v5/repos/wkz_gitee/yuan/contents/video-play.json?t=${t}`;
+      // const fileUrl = `api/v5/repos/wkz_gitee/yuan/contents/tv4.m3u8?t=${t}`;
+      const fileUrl = `api/v5/repos/wkz_gitee/yuan/contents/tv.txt?t=${t}`;
       axios({
         method: 'get',
         timeout: 6000,
@@ -132,17 +135,43 @@ export default {
       })
         .then((response) => {
           const decodedText = atob(response.data.content); // 解码得到明文
-          console.log('decodedText', JSON.parse(decodedText)); // 输出结果：Hello World!
-          this.defaultList = JSON.parse(decodedText).list;
-          this.$nextTick(() => {
-            this.videoUrl = this.defaultList[0].children[0];
-            console.log('aaa', this.videoUrl);
-            this.init();
-          });
+          // console.log('decodedText', JSON.parse(decodedText)); // 输出结果：Hello World!
+          console.log('decodedText', decodedText); // 输出结果：Hello World!
+          // this.defaultList = JSON.parse(decodedText).list;
+          // this.$nextTick(() => {
+          //   this.videoUrl = this.defaultList[0].children[0];
+          //   console.log('aaa', this.videoUrl);
+          //   this.init();
+          // });
+          this.formatUrl(decodedText);
           // 这里可以对返回的文件内容进行处理
         }).catch((error) => {
           console.error('获取文件失败:', error);
         });
+    },
+    formatUrl (decodedText) {
+      const lines = decodedText.split('\n');
+      console.log('lines', lines);
+      let m3uOutput = '#EXTM3U x-tvg-url="https://live.fanmingming.com/e.xml"\n';
+      let currentGroup = null;
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (trimmedLine !== '') {
+          if (trimmedLine.includes('#genre#')) {
+            currentGroup = trimmedLine.replace(/,#genre#/, '').trim();
+          } else {
+            const [originalChannelName, channelLink] = trimmedLine.split(',').map(item => item.trim());
+            const processedChannelName = originalChannelName.replace(/(CCTV|CETV)-(\d+).*/, '$1$2');
+            m3uOutput += `#EXTINF:-1 tvg-name="${processedChannelName}" tvg-logo="https://live.fanmingming.com/tv/${processedChannelName}.png"`;
+            if (currentGroup) {
+              m3uOutput += ` group-title="${currentGroup}"`;
+            }
+            m3uOutput += `,${originalChannelName}\n${channelLink}\n`;
+          }
+        }
+      }
+      console.log('m3uOutput', m3uOutput);
+      // document.getElementById('m3uOutput').value = m3uOutput;
     },
     init () {
       // 播放器初始化
@@ -402,7 +431,6 @@ export default {
       width: 100%;
       &::before {
         content: '\e73b';
-        //font-family: element-icons;
         font-family: vant-icon;
         position: absolute;
         top: 0;
@@ -436,8 +464,7 @@ export default {
       height: 100%;
       width: 100%;
       &::before {
-        content: '\e6b4';
-        //color: white;
+        content: '\e6b2';
         font-family: vant-icon;
         position: absolute;
         top: 0;
