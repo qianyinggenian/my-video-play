@@ -3,6 +3,11 @@ export const defaultList = [
     text: 'CCTV1',
     children: [
       {
+        text: '源0',
+        id: 0,
+        url: 'https://live-play.cctvnews.cctv.com/cctv/merge_cctv13.m3u8'
+      },
+      {
         text: '源1',
         id: 1,
         url: 'https://node1.olelive.com:6443/live/CCTV1HD/hls.m3u8'

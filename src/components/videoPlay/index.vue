@@ -26,7 +26,7 @@
       >
         <van-form @submit="onSubmit">
           <van-tree-select
-              :items="defaultList"
+              :items="videoMenu"
               :active-id.sync="activeId"
               :main-active-index.sync="activeIndex"
               @click-nav="clickNav"
@@ -64,7 +64,7 @@
                 v-model="fileList"
                 :max-count="1"
                 accept=".m3u,.m3u8,.txt,.json"
-                :deletable="false"
+                :deletable="true"
                 :after-read="afterRead"
             />
           </van-cell-group>
@@ -93,6 +93,7 @@ import '@videojs/http-streaming';
 // import 'videojs-youtube';
 // import 'videojs-landscape-fullscreen';
 import { defaultList } from '@/components/videoPlay/list';
+import { Toast } from 'vant';
 
 export default {
   name: 'index',
@@ -116,6 +117,9 @@ export default {
       videoUrl: '',
       player: null,
       defaultList: defaultList,
+      videoMenu: [],
+      fileType: '',
+      fileContent: null,
       isFullTransform: false,
       isFull: false,
       className: [
@@ -142,10 +146,7 @@ export default {
     this.$nextTick(() => {
       this.init();
     });
-    this.setOrientation(); // 初始化时设置视频方向
-    window.addEventListener('orientationchange', () => {
-      this.setOrientation(); // 当手机方向改变时重新设置视频方向
-    });
+    this.videoMenu = this.defaultList;
     // this.fetchFileContent();
   },
   methods: {
@@ -161,10 +162,10 @@ export default {
     afterRead (e) {
       const file = e.file;
       const fileType = file.name.substring(file.name.lastIndexOf('.')).toLocaleLowerCase();
-      console.log(fileType);
+      this.fileType = fileType;
       const reader = new FileReader();
       reader.onloadend = () => {
-        this.getFileInfo(reader.result);
+        this.getFileInfo(reader.result, fileType);
       };
       reader.readAsDataURL(file);
     },
@@ -174,35 +175,41 @@ export default {
      * @author qianyinggenian
      * @date 2024/01/08
      */
-    getFileInfo (path) {
+    getFileInfo (path, fileType) {
+      console.log('fileType', fileType);
       axios.get(path) // 这里的路径应根据实际情况修改
         .then(response => {
-          this.fileContent = response.data;
-          console.log('fileContent', this.fileContent);
+          if (fileType === '.json') {
+            this.fileContent = response.data;
+          } else {
+            this.fileContent = response.data;
+            console.log('fileContent', this.fileContent);
+          }
         })
         .catch(error => {
           console.log('Error:', error);
         });
     },
-    transformFn () {
-      this.isFullTransform = !this.isFullTransform;
-    },
-    setOrientation () {
-      // const video = this.$refs.myVideo;
-      // console.log(video);
-      if (window.matchMedia('(orientation: portrait)').matches) {
-        // 如果是竖屏模式
-        // alert('旋转竖屏');
-        // console.log('竖屏');
-        // video.style.width = '100%';
-        // video.style.height = 'auto';
-      } else {
-        console.log('横屏');
-        // alert('旋转横屏模式');
-        // 如果是横屏模式
-        // video.style.width = '';
-        // video.style.height = '';
+
+    /**
+     * @Description 设置确定后触发
+     * @author qianyinggenian
+     * @date 2024/01/08
+     */
+    onSubmitSetting () {
+      if (this.sourcePath === '默认') {
+        this.videoMenu = this.defaultList;
+      } else if (this.sourcePath === '本地') {
+        if (this.fileList.length === 0) {
+          Toast('请选择文件');
+          return false;
+        } else {
+          if (this.fileType === '.json') {
+            this.videoMenu = this.fileContent;
+          }
+        }
       }
+      this.showSetting = false;
     },
     fetchFileContent () {
       const t = new Date().getTime();
@@ -259,7 +266,7 @@ export default {
     },
     init () {
       // 播放器初始化
-      const that = this;
+      // const that = this;
       this.player = this.$videojs(this.videoId, {
         language: 'zh-CN',
         // techOrder: ['youtube'],
@@ -291,9 +298,9 @@ export default {
               inline: false // 不使用水平方式
             }
           ],
-          Menu: true,
-          playbackRateMenuButton: true,
-          timeDivider: false,
+          // Menu: true,
+          // playbackRateMenuButton: true,
+          timeDivider: true,
           currentTimeDisplay: true,
           playbackRate: true,
           remainingTimeDisplay: true,
@@ -313,16 +320,13 @@ export default {
         this.on('fullscreenchange', () => {
           if (this.isFullscreen()) {
             this.enterFullWindow();
-            that.isFullTransform = true;
             // that.player.landscapeFullscreen();
           } else {
-            that.isFullTransform = false;
             this.exitFullWindow();
           }
         });
       });
       this.$nextTick(() => {
-        // this.addMenu();
         this.addButton();
         this.addButtonFull();
         this.addSettingBtn();
@@ -333,10 +337,9 @@ export default {
     customFullFn () {
       const app = document.querySelector('.video-container');
       const body = app;
-      const width = body.clientWidth;
-      const height = body.clientHeight;
-      const max = height;
-      const min = width;
+      // const width = body.clientWidth;
+      const max = body.clientHeight;
+      const min = body.clientWidth;
       app.style.width = max + 'px';
       app.style.height = min + 'px';
       this.isFullTransform = !this.isFullTransform;
@@ -348,40 +351,6 @@ export default {
       console.log('item', item);
       this.activeItem = item;
     },
-    /**
-     * @Description 添加menu菜单
-     * @author wangkangzhang
-     * @date 2023/12/22
-     */
-    addMenu () {
-      const MenuButton = this.$videojs.getComponent('MenuButton');
-      const Menu = this.$videojs.getComponent('Menu');
-      const MenuItem = this.$videojs.getComponent('MenuItem');
-
-      const items = ['100%', '80%', '50%', 'auto'];
-      const myMenu = new Menu(this.player);
-
-      const myMenuItemList = [];
-
-      for (let i = 0; i < items.length; i++) {
-        myMenuItemList.push(new MenuItem(this.player, { label: items[i] }));
-        const that = this;
-        const item = items[i];
-        myMenuItemList[i].on('click', ($event) => {
-          that.setShowPercent($event, item);
-        });
-        myMenu.addItem(myMenuItemList[i]);
-      }
-      this.player.myMenu = myMenu;
-      this.player.myMenuItemList = myMenuItemList;
-      const myMenuButton = new MenuButton(this.player);
-      myMenuButton.addChild(myMenu);
-      myMenuButton.controlText('显示比例');
-      myMenuButton.addClass('my-menu-button');
-      myMenuButton.children()[0].addClass('vjs-visible-text');
-      this.player.myMenuButton = myMenuButton;
-      this.player.controlBar.addChild(myMenuButton);
-    },
     onSubmit () {
       this.showList = false;
       this.videoUrl = this.activeItem.url;
@@ -390,14 +359,6 @@ export default {
         src: this.videoUrl
       });
       this.player.play();
-    },
-    /**
-     * @Description 设置确定后触发
-     * @author qianyinggenian
-     * @date 2024/01/08
-    */
-    onSubmitSetting () {
-      this.showSetting = false;
     },
     /**
      * @Description 添加按钮
@@ -429,8 +390,6 @@ export default {
         controlText: '全屏',
         clickHandler: (event) => {
           // 点击函数
-
-          this.isFull = !this.isFull;
           this.customFullFn();
         }
       });
@@ -466,10 +425,6 @@ export default {
      */
     closePopupSetting () {
       this.showSetting = false;
-    },
-    setShowPercent (e, item) {
-      console.log('e', e);
-      console.log('item', item);
     },
     //  修改video的src
     updateUrl () {
@@ -540,7 +495,6 @@ export default {
   margin-left: -1.75em !important;
 }
 ::v-deep .custom-list {
-
   @include customStyle;
   span {
     &:first-child {
@@ -566,16 +520,6 @@ export default {
   }
 }
 ::v-deep .custom-full {
-  //display: flex;
-  //align-items: center;
-  //justify-content: center;
-  //position: relative;
-  //text-align: center;
-  //cursor: pointer;
-  //margin: 0;
-  //padding: 0;
-  //height: 100%;
-  //width: 4em !important;
   @include customStyle;
   span {
     &:first-child {
@@ -656,7 +600,7 @@ export default {
 ::v-deep .van-form {
   height: 100%;
   .van-tree-select {
-    height: calc(100% - 76px - 44px) !important;
+    height: calc(100% - 76px) !important;
     .van-tree-select__content {
       flex: 1 !important;
       -webkit-box-flex: 1 !important;
@@ -664,9 +608,7 @@ export default {
     }
   }
 }
-//@media screen and (max-aspect-ratio: 9/16) {
-//  .video-container {
-//    //background-color: red; /* 横屏模式下的背景色 */
-//  }
-//}
+.videoId-dimensions.vjs-fluid:not(.vjs-audio-only-mode) {
+   padding-top: 0;
+}
 </style>
