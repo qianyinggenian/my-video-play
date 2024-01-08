@@ -161,6 +161,7 @@ export default {
     afterRead (e) {
       const file = e.file;
       const fileType = file.name.substring(file.name.lastIndexOf('.')).toLocaleLowerCase();
+      console.log(fileType);
       const reader = new FileReader();
       reader.onloadend = () => {
         this.getFileInfo(reader.result);
