@@ -63,7 +63,7 @@
             <van-uploader
                 v-model="fileList"
                 :max-count="1"
-                accept=".m3u,.m3u8,.txt,.json"
+                accept="audio/x-mpegurl,application/x-mpegurl,text/plain,application/json"
                 :deletable="true"
                 :after-read="afterRead"
             />
@@ -209,6 +209,8 @@ export default {
           }
         }
       }
+      this.activeIndex = null;
+      this.activeId = null;
       this.showSetting = false;
     },
     fetchFileContent () {
@@ -345,7 +347,7 @@ export default {
       this.isFullTransform = !this.isFullTransform;
     },
     clickNav (index) {
-      this.activeItem = this.defaultList[index].children[0];
+      this.activeItem = this.videoMenu[index].children[0];
     },
     clickItem (item) {
       console.log('item', item);
