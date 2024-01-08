@@ -3,11 +3,6 @@ export const defaultList = [
     text: 'CCTV1',
     children: [
       {
-        text: '源',
-        id: 0,
-        url: 'https://cfss.cc/ds/ysp/qp.php?id=cctv1&key=31165&Cf.m3u8'
-      },
-      {
         text: '源1',
         id: 1,
         url: 'https://node1.olelive.com:6443/live/CCTV1HD/hls.m3u8'
