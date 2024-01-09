@@ -23,6 +23,7 @@ git commit -m 'deploy'
 # git push -f git@github.com:qianyinggenian/qianyinggenian.github.io.git gh-pages
 
 # 部署到 https://<USERNAME>.github.io/<REPO>
- git push -f git@github.com:qianyinggenian/my-video-play.git master:gh-pages
+# git push -f git@github.com:qianyinggenian/my-video-play.git master:gh-pages
+ git push -f https://github.com/qianyinggenian/my-video-play.git master:gh-pages
 
 cd -
