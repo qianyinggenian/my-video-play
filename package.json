@@ -16,6 +16,8 @@
     "axios": "^1.6.3",
     "babel-polyfill": "^6.26.0",
     "core-js": "^3.8.3",
+    "is-base64": "^1.1.0",
+    "js-base64": "^3.7.5",
     "js-cookie": "^3.0.5",
     "vant": "^2.13.2",
     "video.js": "^8.3.0",
