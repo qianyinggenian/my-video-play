@@ -7,6 +7,7 @@
           :class="className"
           preload="auto"
           :poster="imgUrl"
+          data-setup="{}"
       >
 
         <!--      x-webkit-airplay="allow"-->
@@ -94,6 +95,7 @@ import '@videojs/http-streaming';
 // import 'videojs-landscape-fullscreen';
 import { defaultList } from '@/components/videoPlay/list';
 import { Toast } from 'vant';
+import { base64ToStr, generateRandomNumbers } from '@/utils/util';
 
 export default {
   name: 'index',
@@ -103,8 +105,8 @@ export default {
       showList: false,
       showSetting: false,
       imgUrl: imgUrl,
-      activeId: 1,
-      activeIndex: 0,
+      activeId: '',
+      activeIndex: '',
       updateVideoUrl: '',
       sourcePath: '默认',
       fileList: [],
@@ -113,7 +115,6 @@ export default {
       showPicker: false,
       activeItem: {},
       // videoUrl: 'https://live-play.cctvnews.cctv.com/cctv/merge_cctv13.m3u8',
-      // videoUrl: 'https://cfss.cc/ds/ysp/qp.php?id=cctv1&key=51397&Cf.m3u8',
       videoUrl: '',
       player: null,
       defaultList: defaultList,
@@ -129,11 +130,7 @@ export default {
         'vjs-visible-text',
         'vjs-sublime-skin',
         'vjs-fluid'
-      ],
-      listUrl: [
-        'http://cfss.cc/api/ysp/cctv1.m3u8',
-        'https://live-play.cctvnews.cctv.com/cctv/merge_cctv13.m3u8']
-      // videoUrl: 'https://vjs.zencdn.net/v/oceans.mp4'
+      ]
     };
   },
   props: {
@@ -171,7 +168,7 @@ export default {
     },
 
     /**
-     * @Description 获取文件中的内容
+     * @Description 获取本地文件中的内容
      * @author qianyinggenian
      * @date 2024/01/08
      */
@@ -179,12 +176,7 @@ export default {
       console.log('fileType', fileType);
       axios.get(path) // 这里的路径应根据实际情况修改
         .then(response => {
-          if (fileType === '.json') {
-            this.fileContent = response.data;
-          } else {
-            this.fileContent = response.data;
-            console.log('fileContent', this.fileContent);
-          }
+          this.fileContent = response.data;
         })
         .catch(error => {
           console.log('Error:', error);
@@ -206,6 +198,10 @@ export default {
         } else {
           if (this.fileType === '.json') {
             this.videoMenu = this.fileContent;
+          } else if (['.m3u', '.m3u8'].includes(this.fileType)) {
+            this.handleFormatM3u8ToJson(this.fileContent);
+          } else if (['.txt'].includes(this.fileType)) {
+            this.handleFormatTxtToJson(this.fileContent);
           }
         }
       }
@@ -218,53 +214,120 @@ export default {
       // const fileUrl = `api/v5/repos/wkz_gitee/yuan/contents/video-play.json?access_token=8592859e7e54a38c469c554361fd8b54&t=${t}`;
       // const fileUrl = `api/v5/repos/wkz_gitee/yuan/contents/video-play.json?t=${t}`;
       // const fileUrl = `api/v5/repos/wkz_gitee/yuan/contents/tv4.m3u8?t=${t}`;
-      const fileUrl = `api/v5/repos/wkz_gitee/yuan/contents/tv.txt?t=${t}`;
+      // const fileUrl = `api/v5/repos/wkz_gitee/yuan/contents/tv.txt?t=${t}`;
+      const fileUrl = `api/v5/repos/wkz_gitee/yuan/contents/tv.txt?access_token=6127914b469c0e96f6cc6a552d68cb04&t=${t}`;
       axios({
         method: 'get',
         timeout: 6000,
         baseURL: 'https://gitee.com/',
         responseType: 'json', // default
+        responseEncoding: 'utf8',
         url: fileUrl
       })
         .then((response) => {
-          const decodedText = atob(response.data.content); // 解码得到明文
-          // console.log('decodedText', JSON.parse(decodedText)); // 输出结果：Hello World!
-          console.log('decodedText', decodedText); // 输出结果：Hello World!
-          // this.defaultList = JSON.parse(decodedText).list;
-          // this.$nextTick(() => {
-          //   this.videoUrl = this.defaultList[0].children[0];
-          //   console.log('aaa', this.videoUrl);
-          //   this.init();
-          // });
-          this.formatUrl(decodedText);
+          // const decodedText = atob(response.data.content); // 解码得到明文
+          const decodedText = base64ToStr(response.data.content); // 解码得到明文
+          this.handleFormatTxtToJson(decodedText, '.txt');
           // 这里可以对返回的文件内容进行处理
         }).catch((error) => {
           console.error('获取文件失败:', error);
         });
     },
-    formatUrl (decodedText) {
+
+    /**
+     * @Description 格式转化 m3u8转json
+     * @author qianyinggenian
+     * @date 2024/11/08
+     */
+    handleFormatM3u8ToJson (decodedText) {
+      if (decodedText.includes('#genre#')) {
+        Toast('m3u8格式源错误');
+        return false;
+      }
       const lines = decodedText.split('\n');
-      console.log('lines', lines);
-      let m3uOutput = '#EXTM3U x-tvg-url="https://live.fanmingming.com/e.xml"\n';
-      let currentGroup = null;
+      let originalChannelName = null;
+      const jsonList = [];
       for (const line of lines) {
         const trimmedLine = line.trim();
         if (trimmedLine !== '') {
-          if (trimmedLine.includes('#genre#')) {
-            currentGroup = trimmedLine.replace(/,#genre#/, '').trim();
-          } else {
-            const [originalChannelName, channelLink] = trimmedLine.split(',').map(item => item.trim());
-            const processedChannelName = originalChannelName.replace(/(CCTV|CETV)-(\d+).*/, '$1$2');
-            m3uOutput += `#EXTINF:-1 tvg-name="${processedChannelName}" tvg-logo="https://live.fanmingming.com/tv/${processedChannelName}.png"`;
-            if (currentGroup) {
-              m3uOutput += ` group-title="${currentGroup}"`;
+          if (trimmedLine.includes('group-title')) {
+            const endIndex = trimmedLine.lastIndexOf('",');
+            originalChannelName = trimmedLine.slice(endIndex, trimmedLine.length).replace(/",/, '').trim();
+          } else if (!trimmedLine.includes('#EXTM3U') && !trimmedLine.includes('#EXTINF')) {
+            const index = jsonList.findIndex(item => item.text === originalChannelName);
+            if (index === -1) {
+              const params = {
+                text: originalChannelName,
+                children: [
+                  {
+                    text: '源1',
+                    // id: 1,
+                    id: generateRandomNumbers(),
+                    url: trimmedLine
+                  }
+                ]
+              };
+              jsonList.push(params);
+            } else {
+              const len = jsonList[index].children.length;
+              const params = {
+                text: `源${len + 1}`,
+                // id: len + 1,
+                id: generateRandomNumbers(),
+                url: trimmedLine
+              };
+              jsonList[index].children.push(params);
             }
-            m3uOutput += `,${originalChannelName}\n${channelLink}\n`;
           }
         }
       }
-      console.log('m3uOutput', m3uOutput);
-      // document.getElementById('m3uOutput').value = m3uOutput;
+      this.videoMenu = jsonList;
+    },
+    /**
+     * @Description txt 转换 json
+     * @author qianyinggenian
+     * @date 2024/01/09
+    */
+    handleFormatTxtToJson (decodedText) {
+      if (decodedText.includes('#EXTINF') || decodedText.includes('#EXTM3U')) {
+        Toast('TXT格式源错误');
+        return false;
+      }
+      const lines = decodedText.split('\n');
+      const jsonList = [];
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (trimmedLine !== '') {
+          if (!trimmedLine.includes('#genre#')) {
+            const [originalChannelName, channelLink] = trimmedLine.split(',').map(item => item.trim());
+            const index = jsonList.findIndex(item => item.text === originalChannelName);
+            if (index === -1) {
+              const params = {
+                text: originalChannelName,
+                children: [
+                  {
+                    text: '源1',
+                    // id: 1,
+                    id: generateRandomNumbers(),
+                    url: channelLink
+                  }
+                ]
+              };
+              jsonList.push(params);
+            } else {
+              const len = jsonList[index].children.length;
+              const params = {
+                text: `源${len + 1}`,
+                // id: len + 1,
+                id: generateRandomNumbers(),
+                url: channelLink
+              };
+              jsonList[index].children.push(params);
+            }
+          }
+        }
+      }
+      this.videoMenu = jsonList;
     },
     init () {
       // 播放器初始化
@@ -319,27 +382,25 @@ export default {
         muted: true // 静音模式 、、 解决首次页面加载播放。
       }, function onPlayerReady () {
         // const that = this;
-        this.on('fullscreenchange', () => {
-          if (this.isFullscreen()) {
-            this.enterFullWindow();
-            // that.player.landscapeFullscreen();
-          } else {
-            this.exitFullWindow();
-          }
-        });
+        // this.on('fullscreenchange', () => {
+        //   if (this.isFullscreen()) {
+        //     this.enterFullWindow();
+        //     // that.player.landscapeFullscreen();
+        //   } else {
+        //     this.exitFullWindow();
+        //   }
+        // });
       });
       this.$nextTick(() => {
         this.addButton();
         this.addButtonFull();
         this.addSettingBtn();
         this.updateUrl();
-        // this.fetchFileContent();
       });
     },
     customFullFn () {
       const app = document.querySelector('.video-container');
       const body = app;
-      // const width = body.clientWidth;
       const max = body.clientHeight;
       const min = body.clientWidth;
       app.style.width = max + 'px';
@@ -347,12 +408,19 @@ export default {
       this.isFullTransform = !this.isFullTransform;
     },
     clickNav (index) {
+      console.log('index', index);
       this.activeItem = this.videoMenu[index].children[0];
+      console.log('activeItem', this.activeItem);
     },
     clickItem (item) {
       console.log('item', item);
       this.activeItem = item;
     },
+    /**
+     * @Description 列表点击确定触发
+     * @author qianyinggenian
+     * @date 2024/01/09
+    */
     onSubmit () {
       this.showList = false;
       this.videoUrl = this.activeItem.url;
@@ -436,11 +504,6 @@ export default {
         src: this.videoUrl
       });
       this.player.play();
-      // this.player.fullscreen({
-      //   enterOnRotate: true, // 是否支持旋转设备进入全屏模式
-      //   iOS: true, // 是否支持iOS系统
-      //   iOSNative: false // 是否使用原生iOS全屏模式
-      // });
     }
   },
   beforeDestroy () {
@@ -469,17 +532,10 @@ export default {
   height: 100%;
   //height: 100vh;
   /* 将videojs  视频铺满容器 */
-  //.video-js .vjs-tech {
-  //  object-fit: fill;
-  //}
   .video-js {
     width: 100%;
-    //height: calc(100% - 50px);
     height: 100%;
   }
-  //.vjs-tech {
-  //    object-fit: cover;
-  //  }
 
 }
 ::v-deep .video-js .vjs-big-play-button {
@@ -574,26 +630,26 @@ export default {
 ::v-deep  .vjs-big-play-button .vjs-icon-placeholder {
   font-size: 1.63em !important;
 }
-::v-deep  .video-js .vjs-time-control{display:block;}
-::v-deep  .video-js .vjs-remaining-time{display: none;}
+::v-deep  .video-js .vjs-time-control { display:block; }
+::v-deep  .video-js .vjs-remaining-time { display: none; }
 ::v-deep .vjs-live-control {
   width: 6em;
   .vjs-live-display {
     margin-left: 1em;
     font-size: 1.75em;
-    .vjs-control-text {
-    }
   }
 }
-.vjs-paused .vjs-big-play-button,
+::v-deep .vjs-paused .vjs-big-play-button,
 .vjs-paused.vjs-has-started .vjs-big-play-button {
   display: block;
 }
-
-.video-js.vjs-playing .vjs-tech {
+/* 点击屏幕播放/暂停 */
+::v-deep .video-js.vjs-playing .vjs-tech {
   pointer-events: auto;
 }
-
+.videoId-dimensions.vjs-fluid:not(.vjs-audio-only-mode) {
+  padding-top: 0;
+}
 .fullTransform {
   transform: rotate(90deg);
   transform-origin: 50vw 50vw;
@@ -610,7 +666,5 @@ export default {
     }
   }
 }
-.videoId-dimensions.vjs-fluid:not(.vjs-audio-only-mode) {
-   padding-top: 0;
-}
+
 </style>

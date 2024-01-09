@@ -51,6 +51,11 @@ export const defaultList = [
         text: '源1',
         id: 1,
         url: 'https://cfss.cc/ds/ysp/qp.php?id=cctv3&key=96697&Cf.m3u8'
+      },
+      {
+        text: '源2',
+        id: 2,
+        url: 'https://cfss.cc/ds/ysp/qp.php?id=cctv3&key=38396&Cf.m3u8'
       }
     ]
   },

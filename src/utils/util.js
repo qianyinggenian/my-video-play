@@ -1,3 +1,5 @@
+import isBase64 from 'is-base64';
+import { Base64 } from 'js-base64';
 export function uniqueArray (arr, key) {
   const obj = {};
   arr = arr.reduce(function (item, next) {
@@ -62,7 +64,7 @@ export function sortDownDate (a, b, sortValue = 'creatDate') {
 }
 
 /**
- * @Description 文件就下载
+ * @Description 文件下载
  * @author wangkangzhang
  * @date 2023/11/16
  */
@@ -75,4 +77,36 @@ export function download (blob, filename = '新建文件.xlsx') {
   a.style.display = 'none';
   a.click();
   document.body.removeChild(a);
+}
+/**
+ * @Description base64解密
+ * @author qianyinggenian
+ * @date 2024/01/09
+*/
+export const base64ToStr = (base64Str) => {
+  if (isBase64(base64Str)) {
+    return Base64.decode(base64Str);
+  }
+  return base64Str;
+};
+
+/**
+ * @Description base64加密
+ * @author qianyinggenian
+ * @date 2024/01/09
+ */
+export const strToBase64 = (str) => Base64.encode(str);
+/**
+ * @Description 生成随机数
+ * @author qianyinggenian
+ * @date 2024/01/09
+*/
+export function generateRandomNumbers () {
+  let d = new Date().getTime();
+  const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = (d + Math.random() * 16) % 16 | 0;
+    d = Math.floor(d / 16);
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+  return uuid;
 }
