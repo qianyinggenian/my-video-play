@@ -1,4 +1,4 @@
-import isBase64 from 'is-base64';
+// import isBase64 from 'is-base64';
 import { Base64 } from 'js-base64';
 export function uniqueArray (arr, key) {
   const obj = {};
@@ -84,10 +84,7 @@ export function download (blob, filename = '新建文件.xlsx') {
  * @date 2024/01/09
 */
 export const base64ToStr = (base64Str) => {
-  if (isBase64(base64Str)) {
-    return Base64.decode(base64Str);
-  }
-  return base64Str;
+  return Base64.decode(base64Str);
 };
 
 /**

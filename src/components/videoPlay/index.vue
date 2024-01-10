@@ -8,14 +8,14 @@
           preload="auto"
           :poster="imgUrl"
           data-setup="{}"
+          x-webkit-airplay="allow"
+          x5-video-player-type="h5"
+          x5-video-player-fullscreen="false"
+          x5-video-orientation="landscape"
+          webkit-playsinline="true"
+          playsinline="true"
       >
 
-        <!--      x-webkit-airplay="allow"-->
-        <!--      x5-video-player-type="h5"-->
-        <!--      x5-video-player-fullscreen="false"-->
-        <!--      x5-video-orientation="landscape"-->
-        <!--      webkit-playsinline="true"-->
-        <!--      playsinline="true"-->
         <source :src="videoUrl" type="application/x-mpegURL"/>
       </video>
       <van-popup
@@ -57,7 +57,7 @@
               @click="showPicker = true"
           />
           <van-cell-group v-if="sourcePath === '远程自定义'">
-            <van-field v-model="value" label="远程地址" placeholder="请输入远程地址" />
+            <van-field v-model="remoteAddress" label="远程地址" placeholder="请输入远程地址" />
           </van-cell-group>
           <van-cell-group  v-if="sourcePath === '本地'">
             <van-cell title="文件类型：.m3u,.m3u8,.txt,.json" />
@@ -96,7 +96,6 @@ import '@videojs/http-streaming';
 import { defaultList } from '@/components/videoPlay/list';
 import { Toast } from 'vant';
 import { base64ToStr, generateRandomNumbers } from '@/utils/util';
-
 export default {
   name: 'index',
   data () {
@@ -109,6 +108,7 @@ export default {
       activeIndex: '',
       updateVideoUrl: '',
       sourcePath: '默认',
+      remoteAddress: '',
       fileList: [],
       value: '',
       columns: ['默认', '本地', '远程自定义'],
@@ -145,6 +145,12 @@ export default {
     });
     this.videoMenu = this.defaultList;
     // this.fetchFileContent();
+    const list = 'https://gitee.com/wkz_gitee/yuan/blob/master/tv.txt'.split('/');
+    const str = `api/v5/repos/${list[3]}/${list[4]}/contents/${list.at(-1)}?`;
+    console.log('str', str);
+    const list1 = 'https://github.com/qianyinggenian/live/blob/main/live.txt';
+    // console.log('list1', list1.split('/'));
+    this.fetchFileContent(list1);
   },
   methods: {
     onConfirmPicker (value) {
@@ -204,22 +210,43 @@ export default {
             this.handleFormatTxtToJson(this.fileContent);
           }
         }
+      } else if (this.sourcePath === '远程自定义') {
+        if (!this.remoteAddress) {
+          Toast('请填写远程地址');
+          return false;
+        } else {
+          if (this.remoteAddress.includes('.m3u')) {
+
+          } else if (this.remoteAddress.includes('.txt')) {
+
+          }
+        }
       }
       this.activeIndex = null;
       this.activeId = null;
       this.showSetting = false;
     },
-    fetchFileContent () {
+    fetchFileContent (url) {
       const t = new Date().getTime();
-      // const fileUrl = `api/v5/repos/wkz_gitee/yuan/contents/video-play.json?access_token=8592859e7e54a38c469c554361fd8b54&t=${t}`;
-      // const fileUrl = `api/v5/repos/wkz_gitee/yuan/contents/video-play.json?t=${t}`;
-      // const fileUrl = `api/v5/repos/wkz_gitee/yuan/contents/tv4.m3u8?t=${t}`;
-      // const fileUrl = `api/v5/repos/wkz_gitee/yuan/contents/tv.txt?t=${t}`;
-      const fileUrl = `api/v5/repos/wkz_gitee/yuan/contents/tv.txt?access_token=6127914b469c0e96f6cc6a552d68cb04&t=${t}`;
+      let baseURL = 'https://gitee.com/';
+      // https://gitee.com/wkz_gitee/yuan/blob/master/tv.txt
+      let fileUrl;
+      if (url) {
+        if (url.includes('gitee.com')) {
+          const list = url.split('/');
+          fileUrl = `api/v5/repos/${list[3]}/${list[4]}/contents/${list.at(-1)}?t=${t}`;
+        } else if (url.includes('github.com')) {
+          baseURL = 'https://api.github.com';
+          const list = url.split('/');
+          fileUrl = `/repos/${list[3]}/${list[4]}/contents/${list.at(-1)}`;
+        }
+      } else {
+        fileUrl = `api/v5/repos/wkz_gitee/yuan/contents/tv.txt?access_token=6127914b469c0e96f6cc6a552d68cb04&t=${t}`;
+      }
       axios({
         method: 'get',
         timeout: 6000,
-        baseURL: 'https://gitee.com/',
+        baseURL: baseURL,
         responseType: 'json', // default
         responseEncoding: 'utf8',
         url: fileUrl
