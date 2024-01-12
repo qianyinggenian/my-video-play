@@ -144,13 +144,8 @@ export default {
       this.init();
     });
     this.videoMenu = this.defaultList;
-    // this.fetchFileContent();
-    const list = 'https://gitee.com/wkz_gitee/yuan/blob/master/tv.txt'.split('/');
-    const str = `api/v5/repos/${list[3]}/${list[4]}/contents/${list.at(-1)}?`;
-    console.log('str', str);
-    const list1 = 'https://github.com/qianyinggenian/live/blob/main/live.txt';
-    // console.log('list1', list1.split('/'));
-    this.fetchFileContent(list1);
+    const url = 'https://github.com/qianyinggenian/live/blob/main/live.txt';
+    this.fetchFileContent(url);
   },
   methods: {
     onConfirmPicker (value) {
@@ -215,11 +210,11 @@ export default {
           Toast('请填写远程地址');
           return false;
         } else {
-          if (this.remoteAddress.includes('.m3u')) {
-
-          } else if (this.remoteAddress.includes('.txt')) {
-
+          if (!this.remoteAddress.includes('github.com') && !this.remoteAddress.includes('gitee.com')) {
+            Toast('请填github或gitee直播源地址');
+            return false;
           }
+          this.fetchFileContent(this.remoteAddress);
         }
       }
       this.activeIndex = null;
@@ -231,13 +226,14 @@ export default {
       let baseURL = 'https://gitee.com/';
       // https://gitee.com/wkz_gitee/yuan/blob/master/tv.txt
       let fileUrl;
+      let fileType = '.txt';
       if (url) {
+        const list = url.split('/');
+        fileType = list.at(-1).substring(list.at(-1).lastIndexOf('.')).toLocaleLowerCase();
         if (url.includes('gitee.com')) {
-          const list = url.split('/');
           fileUrl = `api/v5/repos/${list[3]}/${list[4]}/contents/${list.at(-1)}?t=${t}`;
         } else if (url.includes('github.com')) {
           baseURL = 'https://api.github.com';
-          const list = url.split('/');
           fileUrl = `/repos/${list[3]}/${list[4]}/contents/${list.at(-1)}`;
         }
       } else {
@@ -254,7 +250,15 @@ export default {
         .then((response) => {
           // const decodedText = atob(response.data.content); // 解码得到明文
           const decodedText = base64ToStr(response.data.content); // 解码得到明文
-          this.handleFormatTxtToJson(decodedText, '.txt');
+          if (fileType === '.txt') {
+            this.handleFormatTxtToJson(decodedText);
+          } else if (['.m3u', '.m3u8'].includes(fileType)) {
+            this.handleFormatM3u8ToJson(decodedText);
+          } else if (fileType === 'json') {
+            this.videoMenu = decodedText;
+          } else {
+            Toast('格式错误');
+          }
           // 这里可以对返回的文件内容进行处理
         }).catch((error) => {
           console.error('获取文件失败:', error);
