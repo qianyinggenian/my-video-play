@@ -1,6 +1,8 @@
 <template>
   <!--  视频组件-->
+
     <div class="video-container" :class="{'fullTransform': isFullTransform}">
+      <v-touch class="touch-container"  v-on:doubletap="dblclickFn">
       <video
           ref="myVideo"
           :id="videoId"
@@ -19,6 +21,7 @@
         <source :src="videoUrl" type="application/x-mpegURL"/>
         <source :src="videoUrl" type="video/mp4">
       </video>
+      </v-touch>
       <van-popup
           v-model="showList"
           round
@@ -169,11 +172,25 @@ export default {
       this.init();
     });
     this.videoMenu = this.defaultList;
-    // const url = 'https://github.com/qianyinggenian/live/blob/main/live.txt';
-    const url = 'https://gitee.com/wkz_gitee/yuan/blob/master/video-play.txt';
+    const url = 'https://github.com/qianyinggenian/live/blob/main/live.txt';
+    // const url = 'https://gitee.com/wkz_gitee/yuan/blob/master/video-play.txt';
     this.fetchFileContent(url);
+    // const elem = document.querySelector('.video-container');
+    // const elem = document.querySelector('.video-js');
+    //
+    // elem.addEventListener('touchstart', function () {
+    //   this.classList.add('hover');
+    //   console.log(111111);
+    // });
+    //
+    // elem.addEventListener('touchend', function () {
+    //   this.classList.remove('hover');
+    // });
   },
   methods: {
+    dblclickFn () {
+      this.player.pause();
+    },
     /**
      * @Description 懒加载
      * @author qianyinggenian
@@ -317,7 +334,7 @@ export default {
         const list = url.split('/');
         fileType = list.at(-1).substring(list.at(-1).lastIndexOf('.')).toLocaleLowerCase();
         if (url.includes('gitee.com')) {
-          fileUrl = `api/v5/repos/${list[3]}/${list[4]}/contents/${list.at(-1)}?t=${t}`;
+          fileUrl = `api/v5/repos/${list[3]}/${list[4]}/contents/${list.at(-1)}?access_token=6127914b469c0e96f6cc6a552d68cb04&t=${t}`;
         } else if (url.includes('github.com')) {
           baseURL = 'https://api.github.com';
           fileUrl = `/repos/${list[3]}/${list[4]}/contents/${list.at(-1)}`;
@@ -699,13 +716,30 @@ export default {
 .video-container {
   width: 100%;
   height: 100%;
-  //height: 100vh;
+  position: relative;
+  .touch-container {
+    width: 100%;
+    height: 100%;
+  }
   /* 将videojs  视频铺满容器 */
   .video-js {
     width: 100%;
     height: 100%;
   }
-
+  .custom-btn {
+    display: none;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 20px;
+    background: #42b983;
+  }
+  &:hover {
+    .custom-btn {
+      display: block;
+    }
+  }
 }
 ::v-deep .video-js .vjs-big-play-button {
   font-size: 2.5em !important;

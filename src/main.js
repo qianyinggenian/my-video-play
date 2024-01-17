@@ -14,11 +14,20 @@ import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 // 引入播放器语言-中文
 import videoZhCN from 'video.js/dist/lang/zh-CN.json';
+import VueTouch from 'vue-touch';
 videojs.addLanguage('zh-CN', videoZhCN);
 Vue.use(Vant);
 Vue.config.productionTip = false;
 Vue.prototype.$videojs = videojs;
 Vue.prototype.$_store = store;
+VueTouch.registerCustomEvent('doubletap', {
+
+  type: 'tap',
+
+  taps: 2
+
+});
+Vue.use(VueTouch, { name: 'v-touch' });
 new Vue({
   router,
   store,
