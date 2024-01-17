@@ -26,14 +26,33 @@
           @close="closePopup"
       >
         <van-form @submit="onSubmit">
-          <van-tree-select
-              :items="videoMenu"
-              :active-id.sync="activeId"
-              :main-active-index.sync="activeIndex"
-              @click-nav="clickNav"
-              @click-item="clickItem"
-          >
-          </van-tree-select>
+          <div class="list-menu">
+            <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
+                <van-list
+                    v-model="loading"
+                    :finished="finished"
+                    finished-text="没有更多了"
+                    @load="onLoad"
+                >
+                  <van-cell
+                      v-for="(item,index) in list"
+                      :key="index"
+                      :title="item.text"
+                      :class="{'active-list': activeItemText === item.text }"
+                      @click="handleVanCell(item)"
+                  />
+                </van-list>
+            </van-pull-refresh>
+            <div class="source-menu">
+              <van-cell
+                  v-for="(item,index) in sourceMenuList"
+                  :key="index"
+                  :title="item.text"
+                  :class="{'active-list': activeSource === item.url }"
+                  @click="handleSourceMenuVanCell(item)"
+              />
+            </div>
+          </div>
           <div style="margin: 16px;">
             <van-button round block type="info" native-type="submit">确定</van-button>
           </div>
@@ -88,11 +107,8 @@
 import axios from 'axios';
 import 'video.js/dist/video-js.css';
 import imgUrl from './images/oceans.png';
-// import videojs from 'video.js'
 import 'videojs-contrib-hls';
 import '@videojs/http-streaming';
-// import 'videojs-youtube';
-// import 'videojs-landscape-fullscreen';
 import { defaultList } from '@/components/videoPlay/list';
 import { Toast } from 'vant';
 import { base64ToStr, generateRandomNumbers } from '@/utils/util';
@@ -100,6 +116,13 @@ export default {
   name: 'index',
   data () {
     return {
+      list: [],
+      activeSource: '',
+      activeItemText: '',
+      sourceMenuList: [],
+      loading: false,
+      finished: false,
+      refreshing: false,
       active: 0,
       showList: false,
       showSetting: false,
@@ -144,10 +167,68 @@ export default {
       this.init();
     });
     this.videoMenu = this.defaultList;
-    const url = 'https://github.com/qianyinggenian/live/blob/main/live.txt';
+    // const url = 'https://github.com/qianyinggenian/live/blob/main/live.txt';
+    const url = 'https://gitee.com/wkz_gitee/yuan/blob/master/video-play.txt';
     this.fetchFileContent(url);
   },
   methods: {
+    /**
+     * @Description 懒加载
+     * @author qianyinggenian
+     * @date 2024/01/17
+    */
+    onLoad () {
+      setTimeout(() => {
+        if (this.refreshing) {
+          this.list = [];
+          this.refreshing = false;
+        }
+
+        for (let i = 0; i < 10; i++) {
+          const item = this.videoMenu[this.list.length];
+          // this.list.push(this.list.length + 1);
+          this.list.push(item);
+        }
+        this.loading = false;
+
+        if (this.list.length >= this.videoMenu.length) {
+          this.finished = true;
+        }
+      }, 1000);
+    },
+    /**
+     * @Description 下拉刷新
+     * @author qianyinggenian
+     * @date 2024/01/17
+    */
+    onRefresh () {
+      // 清空列表数据
+      this.finished = false;
+
+      // 重新加载数据
+      // 将 loading 设置为 true，表示处于加载状态
+      this.loading = true;
+      this.onLoad();
+    },
+    /**
+     * @Description 点击列表菜单项触发
+     * @author wangkangzhang
+     * @date 2024/01/17
+    */
+    handleVanCell (item) {
+      this.sourceMenuList = item.children;
+      this.activeItemText = item.text;
+      this.activeItem = item.children[0];
+    },
+    /**
+     * @Description 点击源触发
+     * @author wangkangzhang
+     * @date 2024/01/17
+    */
+    handleSourceMenuVanCell (item) {
+      this.activeItem = item;
+      this.activeSource = item.url;
+    },
     onConfirmPicker (value) {
       this.sourcePath = value;
       this.showPicker = false;
@@ -438,15 +519,6 @@ export default {
       app.style.height = min + 'px';
       this.isFullTransform = !this.isFullTransform;
     },
-    clickNav (index) {
-      console.log('index', index);
-      this.activeItem = this.videoMenu[index].children[0];
-      console.log('activeItem', this.activeItem);
-    },
-    clickItem (item) {
-      console.log('item', item);
-      this.activeItem = item;
-    },
     /**
      * @Description 列表点击确定触发
      * @author qianyinggenian
@@ -519,6 +591,8 @@ export default {
      */
     closePopup () {
       this.showList = false;
+      this.activeItemText = '';
+      this.activeSource = '';
     },
     /** 关闭设置弹窗触发
      * @param e
@@ -695,6 +769,26 @@ export default {
       -webkit-box-flex: 1 !important;
       -webkit-flex: 1 !important;
     }
+  }
+  .list-menu {
+    height: calc(100% - 76px) !important;
+    display: flex;
+    .van-pull-refresh {
+      height: 100%;
+      flex: 2;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+    .source-menu {
+      flex: 1;
+      height: 100%;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+  }
+  .active-list {
+    color: white !important;
+    background-color: rgba(25,137,250,0.8) !important;
   }
 }
 
