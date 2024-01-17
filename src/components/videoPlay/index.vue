@@ -106,10 +106,19 @@
         </van-form>
       </van-popup>
       <div class="custom-btn" v-if="isShowTopRightBtn">
-        <van-dropdown-menu>
-          <van-dropdown-item  @change="handleDropdownMenu" v-model="dropdownMenuValue" :options="option1" />
-        </van-dropdown-menu>
+        <van-icon name="more" :size="30" color="#ffffff"  @click="handleMore" />
       </div>
+      <van-popup
+          class="more-popup"
+          v-model="showMore"
+          position="right"
+          @close="closeMorePopup"
+      >
+        <div class="more-btn">
+          <van-button plain type="primary" @click="handleShowList">列表</van-button>
+          <van-button plain type="info" @click="handleShowSetting">设置</van-button>
+        </div>
+      </van-popup>
     </div>
 </template>
 <script>
@@ -141,6 +150,7 @@ export default {
       refreshing: false,
       active: 0,
       showList: false,
+      showMore: false,
       showSetting: false,
       imgUrl: imgUrl,
       activeId: '',
@@ -204,6 +214,25 @@ export default {
      */
     onTap () {
       this.isShowTopRightBtn = !this.isShowTopRightBtn;
+    },
+    /**
+     * @Description 点击更多图标触发
+     * @author qianyinggenian
+     * @date 2024/01/17
+     */
+    handleMore () {
+      this.showMore = true;
+    },
+    closeMorePopup () {
+      this.showMore = false;
+    },
+    handleShowSetting () {
+      this.showList = false;
+      this.showSetting = !this.showSetting;
+    },
+    handleShowList () {
+      this.showSetting = false;
+      this.showList = !this.showList;
     },
     /**
      * @Description 下拉菜单切换触发
@@ -758,24 +787,26 @@ export default {
   .custom-btn {
     display: block;
     position: absolute;
-    top: 0;
-    right: 0;
-    width: 100px;
-    height: 20px;
-    background: #42b983;
+    top: 10px;
+    right: 10px;
   }
 }
-//::v-deep .van-dropdown-item {
-//  .van-popup--top {
-//    right:0 !important;
-//    width: 100px !important;
-//  }
-//}
-::v-deep .van-popup--top {
-    right:0 !important;
-    left: auto !important;
-    width: 100px !important;
+.more-popup {
+  height: 14%;
+  top: 7%;
+  right:0 !important;
+  left: auto !important;
+  width: 25% !important;
+  .more-btn {
+    display: flex;
+    padding: 10px;
+    box-sizing: border-box;
+    flex-direction: column;
+    .van-button {
+      margin-bottom: 5px;
+    }
   }
+}
 
 ::v-deep .video-js .vjs-big-play-button {
   font-size: 2.5em !important;
