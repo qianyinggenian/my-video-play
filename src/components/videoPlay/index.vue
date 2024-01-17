@@ -499,68 +499,59 @@ export default {
         loop: true, // 循环播放
         muted: true // 静音模式 、、 解决首次页面加载播放。
       }, function onPlayerReady () {
-        // const that = this;
-        // this.on('fullscreenchange', () => {
-        //   if (this.isFullscreen()) {
-        //     this.enterFullWindow();
-        //     // that.player.landscapeFullscreen();
-        //   } else {
-        //     this.exitFullWindow();
-        //   }
-        // });
         console.log('视频可以播放啦~~~');
-        /**
-         * 监听内部事件
-         */
-        this.on('loadstart', function () {
-          console.log('开始请求数据 ');
-        });
-        this.on('progress', function () {
-          console.log('正在请求数据 ');
-        });
-        this.on('loadedmetadata', function () {
-          console.log('获取资源长度完成 ');
-        });
-        this.on('canplaythrough', function () {
-          console.log('视频源数据加载完成');
-        });
-        this.on('waiting', function () {
-          console.log('等待数据');
-        });
-        this.on('play', function () {
-          console.log('视频开始播放');
-        });
-        this.on('playing', function () {
-          console.log('视频播放中');
-        });
-        this.on('pause', function () {
-          console.log('视频暂停播放');
-        });
-        this.on('ended', function () {
-          console.log('视频播放结束');
-        });
+        // /**
+        //  * 监听内部事件
+        //  */
+        // this.on('loadstart', function () {
+        //   console.log('开始请求数据 ');
+        // });
+        // this.on('progress', function () {
+        //   console.log('正在请求数据 ');
+        // });
+        // this.on('loadedmetadata', function () {
+        //   console.log('获取资源长度完成 ');
+        // });
+        // this.on('canplaythrough', function () {
+        //   console.log('视频源数据加载完成');
+        // });
+        // this.on('waiting', function () {
+        //   console.log('等待数据');
+        // });
+        // this.on('play', function () {
+        //   console.log('视频开始播放');
+        // });
+        // this.on('playing', function () {
+        //   console.log('视频播放中');
+        // });
+        // this.on('pause', function () {
+        //   console.log('视频暂停播放');
+        // });
+        // this.on('ended', function () {
+        //   console.log('视频播放结束');
+        // });
         this.on('error', function () {
           // 报错信息
           that.errorFn();
         });
-        this.on('seeking', function () {
-          console.log('视频跳转中');
-        });
-        this.on('seeked', function () {
-          console.log('视频跳转结束');
-        });
-        this.on('ratechange', function () {
-          console.log('播放速率改变');
-        });
-        this.on('timeupdate', function () {
-          console.log('播放时长改变');
-        });
-        this.on('volumechange', function () {
-          console.log('音量改变');
-        });
-        this.on('stalled', function () {
-          console.log('网速异常');
-        });
+        // this.on('seeking', function () {
+        //   console.log('视频跳转中');
+        // });
+        // this.on('seeked', function () {
+        //   console.log('视频跳转结束');
+        // });
+        // this.on('ratechange', function () {
+        //   console.log('播放速率改变');
+        // });
+        // this.on('timeupdate', function () {
+        //   console.log('播放时长改变');
+        // });
+        // this.on('volumechange', function () {
+        //   console.log('音量改变');
+        // });
+        // this.on('stalled', function () {
+        //   console.log('网速异常');
+        // });
       });
       this.$nextTick(() => {
         this.addButton();
