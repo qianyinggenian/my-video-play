@@ -17,6 +17,7 @@
       >
 
         <source :src="videoUrl" type="application/x-mpegURL"/>
+        <source :src="videoUrl" type="video/mp4">
       </video>
       <van-popup
           v-model="showList"
@@ -39,7 +40,7 @@
                       :key="index"
                       :title="item.text"
                       :class="{'active-list': activeItemText === item.text }"
-                      @click="handleVanCell(item)"
+                      @click="handleVanCell(item,index)"
                   />
                 </van-list>
             </van-pull-refresh>
@@ -119,6 +120,7 @@ export default {
       list: [],
       activeSource: '',
       activeItemText: '',
+      activeItemIndex: null,
       sourceMenuList: [],
       loading: false,
       finished: false,
@@ -215,10 +217,11 @@ export default {
      * @author wangkangzhang
      * @date 2024/01/17
     */
-    handleVanCell (item) {
+    handleVanCell (item, index) {
       this.sourceMenuList = item.children;
       this.activeItemText = item.text;
       this.activeItem = item.children[0];
+      this.activeItemIndex = index;
     },
     /**
      * @Description 点击源触发
@@ -271,6 +274,8 @@ export default {
      * @date 2024/01/08
      */
     onSubmitSetting () {
+      this.list = [];
+      this.sourceMenuList = [];
       if (this.sourcePath === '默认') {
         this.videoMenu = this.defaultList;
       } else if (this.sourcePath === '本地') {
@@ -443,7 +448,7 @@ export default {
     },
     init () {
       // 播放器初始化
-      // const that = this;
+      const that = this;
       this.player = this.$videojs(this.videoId, {
         language: 'zh-CN',
         // techOrder: ['youtube'],
@@ -484,6 +489,7 @@ export default {
           PictureInPictureToggle: true, // 画中画
           FullscreenToggle: false // 全屏
         },
+        // techOrder: ['html5', 'flash'],
         playbackRates: [0.5, 1, 1.5, 2],
         liveDisplay: false,
         liveui: true,
@@ -502,6 +508,59 @@ export default {
         //     this.exitFullWindow();
         //   }
         // });
+        console.log('视频可以播放啦~~~');
+        /**
+         * 监听内部事件
+         */
+        this.on('loadstart', function () {
+          console.log('开始请求数据 ');
+        });
+        this.on('progress', function () {
+          console.log('正在请求数据 ');
+        });
+        this.on('loadedmetadata', function () {
+          console.log('获取资源长度完成 ');
+        });
+        this.on('canplaythrough', function () {
+          console.log('视频源数据加载完成');
+        });
+        this.on('waiting', function () {
+          console.log('等待数据');
+        });
+        this.on('play', function () {
+          console.log('视频开始播放');
+        });
+        this.on('playing', function () {
+          console.log('视频播放中');
+        });
+        this.on('pause', function () {
+          console.log('视频暂停播放');
+        });
+        this.on('ended', function () {
+          console.log('视频播放结束');
+        });
+        this.on('error', function () {
+          // 报错信息
+          that.errorFn();
+        });
+        this.on('seeking', function () {
+          console.log('视频跳转中');
+        });
+        this.on('seeked', function () {
+          console.log('视频跳转结束');
+        });
+        this.on('ratechange', function () {
+          console.log('播放速率改变');
+        });
+        this.on('timeupdate', function () {
+          console.log('播放时长改变');
+        });
+        this.on('volumechange', function () {
+          console.log('音量改变');
+        });
+        this.on('stalled', function () {
+          console.log('网速异常');
+        });
       });
       this.$nextTick(() => {
         this.addButton();
@@ -509,6 +568,20 @@ export default {
         this.addSettingBtn();
         this.updateUrl();
       });
+    },
+    errorFn () {
+      console.log('asdasdasdasd');
+      const nextMenu = this.list[this.activeItemIndex + 1];
+      if (nextMenu) {
+        console.log('nextMenu', nextMenu);
+        this.activeItemText = nextMenu.text;
+        this.activeItemIndex += 1;
+        this.sourceMenuList = nextMenu.children;
+        this.activeItem = nextMenu.children[0];
+        this.activeSource = this.activeItem.url;
+        this.onSubmit(true);
+      }
+      // this.activeItemText = this.list[this.activeItemIndex + 1];
     },
     customFullFn () {
       const app = document.querySelector('.video-container');
@@ -524,13 +597,16 @@ export default {
      * @author qianyinggenian
      * @date 2024/01/09
     */
-    onSubmit () {
+    onSubmit (flag) {
       this.showList = false;
       this.videoUrl = this.activeItem.url;
       this.player.src({
         type: 'application/x-mpegURL',
         src: this.videoUrl
       });
+      if (flag) {
+        this.player.load();
+      }
       this.player.play();
     },
     /**
