@@ -21,11 +21,8 @@ Vue.config.productionTip = false;
 Vue.prototype.$videojs = videojs;
 Vue.prototype.$_store = store;
 VueTouch.registerCustomEvent('doubletap', {
-
   type: 'tap',
-
   taps: 2
-
 });
 Vue.use(VueTouch, { name: 'v-touch' });
 new Vue({

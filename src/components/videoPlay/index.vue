@@ -2,7 +2,7 @@
   <!--  视频组件-->
 
     <div class="video-container" :class="{'fullTransform': isFullTransform}">
-      <v-touch class="touch-container"  v-on:doubletap="dblclickFn">
+      <v-touch class="touch-container" @tap="onTap" v-on:doubletap="dblclickFn">
       <video
           ref="myVideo"
           :id="videoId"
@@ -105,6 +105,11 @@
           </div>
         </van-form>
       </van-popup>
+      <div class="custom-btn" v-if="isShowTopRightBtn">
+        <van-dropdown-menu>
+          <van-dropdown-item  @change="handleDropdownMenu" v-model="dropdownMenuValue" :options="option1" />
+        </van-dropdown-menu>
+      </div>
     </div>
 </template>
 <script>
@@ -124,7 +129,13 @@ export default {
       activeSource: '',
       activeItemText: '',
       activeItemIndex: null,
+      isShowTopRightBtn: false,
       sourceMenuList: [],
+      option1: [
+        { text: '列表', value: '列表' },
+        { text: '设置', value: '设置' }
+      ],
+      dropdownMenuValue: '列表',
       loading: false,
       finished: false,
       refreshing: false,
@@ -175,21 +186,38 @@ export default {
     const url = 'https://github.com/qianyinggenian/live/blob/main/live.txt';
     // const url = 'https://gitee.com/wkz_gitee/yuan/blob/master/video-play.txt';
     this.fetchFileContent(url);
-    // const elem = document.querySelector('.video-container');
-    // const elem = document.querySelector('.video-js');
-    //
-    // elem.addEventListener('touchstart', function () {
-    //   this.classList.add('hover');
-    //   console.log(111111);
-    // });
-    //
-    // elem.addEventListener('touchend', function () {
-    //   this.classList.remove('hover');
-    // });
   },
   methods: {
+    /**
+     * @Description 移动端双击
+     * @author qianyinggenian
+     * @date 2024/01/17
+     */
     dblclickFn () {
       this.player.pause();
+      this.isShowTopRightBtn = true;
+    },
+    /**
+     * @Description 移动端单击
+     * @author qianyinggenian
+     * @date 2024/01/17
+     */
+    onTap () {
+      this.isShowTopRightBtn = !this.isShowTopRightBtn;
+    },
+    /**
+     * @Description 下拉菜单切换触发
+     * @author qianyinggenian
+     * @date 2024/01/17
+     */
+    handleDropdownMenu (val) {
+      this.showList = false;
+      this.showSetting = false;
+      if (val === '列表') {
+        this.showList = true;
+      } else if (val === '设置') {
+        this.showSetting = true;
+      }
     },
     /**
      * @Description 懒加载
@@ -535,9 +563,10 @@ export default {
         // this.on('waiting', function () {
         //   console.log('等待数据');
         // });
-        // this.on('play', function () {
-        //   console.log('视频开始播放');
-        // });
+        this.on('play', function () {
+          console.log('视频开始播放');
+          that.isShowTopRightBtn = false;
+        });
         // this.on('playing', function () {
         //   console.log('视频播放中');
         // });
@@ -727,7 +756,7 @@ export default {
     height: 100%;
   }
   .custom-btn {
-    display: none;
+    display: block;
     position: absolute;
     top: 0;
     right: 0;
@@ -735,12 +764,19 @@ export default {
     height: 20px;
     background: #42b983;
   }
-  &:hover {
-    .custom-btn {
-      display: block;
-    }
-  }
 }
+//::v-deep .van-dropdown-item {
+//  .van-popup--top {
+//    right:0 !important;
+//    width: 100px !important;
+//  }
+//}
+::v-deep .van-popup--top {
+    right:0 !important;
+    left: auto !important;
+    width: 100px !important;
+  }
+
 ::v-deep .video-js .vjs-big-play-button {
   font-size: 2.5em !important;
   line-height: 2.3em !important;
