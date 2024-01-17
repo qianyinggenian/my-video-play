@@ -561,10 +561,8 @@ export default {
       });
     },
     errorFn () {
-      console.log('asdasdasdasd');
       const nextMenu = this.list[this.activeItemIndex + 1];
       if (nextMenu) {
-        console.log('nextMenu', nextMenu);
         this.activeItemText = nextMenu.text;
         this.activeItemIndex += 1;
         this.sourceMenuList = nextMenu.children;
@@ -572,7 +570,6 @@ export default {
         this.activeSource = this.activeItem.url;
         this.onSubmit(true);
       }
-      // this.activeItemText = this.list[this.activeItemIndex + 1];
     },
     customFullFn () {
       const app = document.querySelector('.video-container');
