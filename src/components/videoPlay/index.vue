@@ -1,6 +1,5 @@
 <template>
   <!--  视频组件-->
-
     <div class="video-container" :class="{'fullTransform': isFullTransform}">
       <v-touch class="touch-container" @tap="onTap" v-on:doubletap="dblclickFn">
       <video
@@ -105,9 +104,6 @@
           </div>
         </van-form>
       </van-popup>
-<!--      <div class="custom-btn" v-if="isShowTopRightBtn">-->
-<!--        <van-icon name="more" :size="30" color="#ffffff"  @click="handleMore" />-->
-<!--      </div>-->
       <van-popup
           class="more-popup"
           v-model="showMore"
@@ -119,10 +115,10 @@
           <van-button plain type="info" @click="handleShowSetting">设置</van-button>
         </div>
       </van-popup>
-      <div class="custom-title">
+      <div class="custom-title" v-if="isShowTopRightBtn">
         <div class="title">
-          <van-icon name="arrow-left" :size="24" />
-          <span>{{activeItemText}}</span>
+          <van-icon name="arrow-left" :size="24"  @click="handleReturn" />
+          <span :title="activeItemText">{{activeItemText}}</span>
         </div>
         <div class="more">
           <van-icon name="more" :size="30" color="#ffffff"  @click="handleMore" />
@@ -232,13 +228,28 @@ export default {
     handleMore () {
       this.showMore = true;
     },
+    /**
+     * @Description 关闭更多弹窗
+     * @author qianyinggenian
+     * @date 2024/01/18
+    */
     closeMorePopup () {
       this.showMore = false;
     },
+    /**
+     * @Description 点击更多-设置按钮触发
+     * @author qianyinggenian
+     * @date 2024/01/18
+    */
     handleShowSetting () {
       this.showList = false;
       this.showSetting = !this.showSetting;
     },
+    /**
+     * @Description 点击更多-列表按钮触发
+     * @author qianyinggenian
+     * @date 2024/01/18
+     */
     handleShowList () {
       this.showSetting = false;
       this.showList = !this.showList;
@@ -529,7 +540,6 @@ export default {
       const that = this;
       this.player = this.$videojs(this.videoId, {
         language: 'zh-CN',
-        // techOrder: ['youtube'],
         autoplay: false,
         bigPlayButton: true,
         posterImage: false,
@@ -560,7 +570,7 @@ export default {
           ],
           // Menu: true,
           // playbackRateMenuButton: true,
-          timeDivider: true,
+          timeDivider: false,
           currentTimeDisplay: true,
           playbackRate: true,
           remainingTimeDisplay: true,
@@ -648,6 +658,16 @@ export default {
         this.activeItem = nextMenu.children[0];
         this.activeSource = this.activeItem.url;
         this.onSubmit(true);
+      }
+    },
+    /**
+     * @Description 点击顶部返回箭头触发
+     * @author qianyinggenian
+     * @date 2024/01/18
+    */
+    handleReturn () {
+      if (this.isFullTransform) {
+        this.customFullFn();
       }
     },
     customFullFn () {
@@ -813,8 +833,13 @@ export default {
       font-size: 18px;
       font-weight: bold;
       align-items: center;
+      overflow: hidden;
       span {
+        width: calc(100% - 30px);
         margin-left: 5px;
+        overflow: hidden;
+        text-overflow:ellipsis;
+        white-space: nowrap;
       }
     }
     .more {
