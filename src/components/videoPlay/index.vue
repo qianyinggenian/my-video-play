@@ -1,25 +1,36 @@
 <template>
   <!--  视频组件-->
     <div class="video-container" :class="{'fullTransform': isFullTransform}">
-      <v-touch class="touch-container" @tap="onTap" v-on:doubletap="dblclickFn">
-      <video
-          ref="myVideo"
-          :id="videoId"
-          :class="className"
-          preload="auto"
-          :poster="imgUrl"
-          data-setup="{}"
-          x-webkit-airplay="allow"
-          x5-video-player-type="h5"
-          x5-video-player-fullscreen="false"
-          x5-video-orientation="landscape"
-          webkit-playsinline="true"
-          playsinline="true"
+      <v-touch
+          class="touch-container"
+          @swipeleft="nowLeft"
+          @swiperight="nowRight"
+          @tap="onTap"
+          @doubletap="dblclickFn"
+          @pinchout="pinchout"
+          @pinchin="pinchin"
+          @pinch="pinch"
+          @swipeup="swipeup"
+          @swipedown="swipedown"
       >
+        <video
+            ref="myVideo"
+            :id="videoId"
+            :class="className"
+            preload="auto"
+            :poster="imgUrl"
+            data-setup="{}"
+            x-webkit-airplay="allow"
+            x5-video-player-type="h5"
+            x5-video-player-fullscreen="false"
+            x5-video-orientation="landscape"
+            webkit-playsinline="true"
+            playsinline="true"
+        >
 
-        <source :src="videoUrl" type="application/x-mpegURL"/>
-        <source :src="videoUrl" type="video/mp4">
-      </video>
+          <source :src="videoUrl" type="application/x-mpegURL"/>
+          <source :src="videoUrl" type="video/mp4">
+        </video>
       </v-touch>
       <van-popup
           v-model="showList"
@@ -135,6 +146,7 @@ import '@videojs/http-streaming';
 import { defaultList } from '@/components/videoPlay/list';
 import { Toast } from 'vant';
 import { base64ToStr, generateRandomNumbers } from '@/utils/util';
+// import oceansUrl from './vid/oceans.mp4';
 export default {
   name: 'index',
   data () {
@@ -209,11 +221,131 @@ export default {
       this.isShowTopRightBtn = true;
     },
     /**
+     * @Description 移动端手势放大
+     * @author qianyinggenian
+     * @date 2024/01/18
+    */
+    pinchout () {
+      if (!this.isFullTransform) {
+        this.customFullFn();
+      }
+    },
+    /**
+     * @Description 移动端手势收缩
+     * @author qianyinggenian
+     * @date 2024/01/18
+    */
+    pinchin () {
+      if (this.isFullTransform) {
+        this.customFullFn();
+      }
+    },
+    /**
+     * @Description 移动端缩放手势
+     * @author qianyinggenian
+     * @date 2024/01/18
+    */
+    pinch () {
+      console.log('缩放手势缩放手势');
+    },
+    /**
+     * @Description 快进
+     * @author qianyinggenian
+     * @date 2024/01/18
+    */
+    fastForwardFn (event) {
+      // 获取滑动距离
+      const distance = event.distance;
+      // 获取容器总长度
+      const clientWidth = document.querySelector('.video-container').clientWidth;
+      // 获取总时长
+      const duration = this.player.duration();
+      if (duration === Infinity) {
+        Toast('不可快进');
+        return false;
+      }
+      // 获取快进时长
+      const percentage = distance / clientWidth * duration;
+      const currentTime = this.player.currentTime();
+      let newCurrentTime = currentTime + percentage;
+      if (newCurrentTime >= duration) {
+        newCurrentTime = distance;
+      }
+      this.player.currentTime(newCurrentTime);
+      this.player.play();
+    },
+    /**
+     * @Description 后退
+     * @author qianyinggenian
+     * @date 2024/01/18
+    */
+    backFn (event) {
+      // 获取滑动距离
+      const distance = event.distance;
+      // 获取容器总长度
+      const clientWidth = document.querySelector('.video-container').clientWidth;
+      // 获取总时长
+      const duration = this.player.duration();
+      if (duration === Infinity) {
+        Toast('不可后退');
+        return false;
+      }
+      // 获取快进时长
+      const percentage = distance / clientWidth * duration;
+      const currentTime = this.player.currentTime();
+      let newCurrentTime = currentTime - percentage;
+      if (newCurrentTime <= 0) {
+        newCurrentTime = 0;
+      }
+      this.player.currentTime(newCurrentTime);
+      this.player.play();
+    },
+    /**
+     * @Description 移动端向上滑动
+     * @author qianyinggenian
+     * @date 2024/01/18
+    */
+    swipeup (event) {
+      if (this.isFullTransform) {
+        this.backFn(event);
+      }
+    },
+    /**
+     * @Description 移动端向下滑动
+     * @author qianyinggenian
+     * @date 2024/01/18
+    */
+    swipedown (event) {
+      if (this.isFullTransform) {
+        this.fastForwardFn(event);
+      }
+    },
+    /**
+     * @Description 移动端向左滑
+     * @author qianyinggenian
+     * @date 2024/01/18
+    */
+    nowLeft (event) {
+      if (!this.isFullTransform) {
+        this.backFn(event);
+      }
+    },
+    /**
+     * @Description 移动端向右滑
+     * @author qianyinggenian
+     * @date 2024/01/18
+    */
+    nowRight (event) {
+      if (!this.isFullTransform) {
+        this.fastForwardFn(event);
+      }
+    },
+    /**
      * @Description 移动端单击
      * @author qianyinggenian
      * @date 2024/01/17
      */
-    onTap () {
+    onTap (e) {
       this.isShowTopRightBtn = !this.isShowTopRightBtn;
     },
     /**
@@ -543,7 +675,7 @@ export default {
           {
             // type: 'application/x-mpegURL',
             src: 'https://live-play.cctvnews.cctv.com/cctv/merge_cctv13.m3u8' // 你的m3u8地址（必填）
-            // src: 'https://cfss.cc/ds/ysp/qp.php?id=cctv1&key=51397&Cf.m3u8' // 你的m3u8地址（必填）
+            // src: oceansUrl // 你的m3u8地址（必填）
           }
         ],
         controlBar: { // 总控制条
@@ -572,11 +704,18 @@ export default {
           PictureInPictureToggle: true, // 画中画
           FullscreenToggle: false // 全屏
         },
+        userActions: {
+          // 单击  pc端生效， 移动端无效
+          // click: that.myClickHandler,
+          // 双击 pc端生效， 移动端无效
+          // doubleClick: that.myDoubleClickHandler
+        },
         // techOrder: ['html5', 'flash'],
         playbackRates: [0.5, 1, 1.5, 2],
         liveDisplay: false,
         liveui: true,
-        preferFullWindow: true,
+        // preferFullWindow: true,
+        preferFullWindow: false,
         LiveDisplay: false, // 是否显示直播文字图标
         controls: true, // 是否显示控件
         loop: true, // 循环播放
@@ -643,6 +782,22 @@ export default {
         this.addSettingBtn();
         this.updateUrl();
       });
+    },
+    /**
+     * @Description PC端单击
+     * @author qianyinggenian
+     * @date 2024/01/18
+    */
+    myClickHandler () {
+      console.log('PC端单击');
+    },
+    /**
+     * @Description PC端双击
+     * @author qianyinggenian
+     * @date 2024/01/18
+    */
+    myDoubleClickHandler () {
+      console.log('pc端双击');
     },
     errorFn () {
       const nextMenu = this.list[this.activeItemIndex + 1];
@@ -749,8 +904,6 @@ export default {
      */
     closePopup () {
       this.showList = false;
-      // this.activeItemText = '';
-      // this.activeSource = '';
     },
     /** 关闭设置弹窗触发
      * @param e
@@ -840,8 +993,13 @@ export default {
     .more {
       flex: 1;
       display: flex;
-      justify-content: flex-end;
+      align-items: center;
+      position: relative;
       flex-shrink: 0;
+      .van-icon-more {
+        position: absolute;
+        right: 10px;
+      }
     }
   }
 }
