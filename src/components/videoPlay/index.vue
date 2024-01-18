@@ -261,7 +261,10 @@ export default {
       // 获取总时长
       const duration = this.player.duration();
       if (duration === Infinity) {
-        Toast('不可快进');
+        Toast({
+          message: '不可快进',
+          className: this.isFullTransform ? 'toastTransform' : ''
+        });
         return false;
       }
       // 获取快进时长
@@ -287,7 +290,10 @@ export default {
       // 获取总时长
       const duration = this.player.duration();
       if (duration === Infinity) {
-        Toast('不可后退');
+        Toast({
+          message: '不可后退',
+          className: this.isFullTransform ? 'toastTransform' : ''
+        });
         return false;
       }
       // 获取快进时长
@@ -490,7 +496,10 @@ export default {
         this.videoMenu = this.defaultList;
       } else if (this.sourcePath === '本地') {
         if (this.fileList.length === 0) {
-          Toast('请选择文件');
+          Toast({
+            message: '请选择文件',
+            className: this.isFullTransform ? 'toastTransform' : ''
+          });
           return false;
         } else {
           if (this.fileType === '.json') {
@@ -503,11 +512,17 @@ export default {
         }
       } else if (this.sourcePath === '远程自定义') {
         if (!this.remoteAddress) {
-          Toast('请填写远程地址');
+          Toast({
+            message: '请填写远程地址',
+            className: this.isFullTransform ? 'toastTransform' : ''
+          });
           return false;
         } else {
           if (!this.remoteAddress.includes('github.com') && !this.remoteAddress.includes('gitee.com')) {
-            Toast('请填github或gitee直播源地址');
+            Toast({
+              message: '请填github或gitee直播源地址',
+              className: this.isFullTransform ? 'toastTransform' : ''
+            });
             return false;
           }
           this.fetchFileContent(this.remoteAddress);
@@ -553,7 +568,10 @@ export default {
           } else if (fileType === 'json') {
             this.videoMenu = decodedText;
           } else {
-            Toast('格式错误');
+            Toast({
+              message: '格式错误',
+              className: this.isFullTransform ? 'toastTransform' : ''
+            });
           }
           // 这里可以对返回的文件内容进行处理
         }).catch((error) => {
@@ -568,7 +586,10 @@ export default {
      */
     handleFormatM3u8ToJson (decodedText) {
       if (decodedText.includes('#genre#')) {
-        Toast('m3u8格式源错误');
+        Toast({
+          message: 'm3u8格式源错误',
+          className: this.isFullTransform ? 'toastTransform' : ''
+        });
         return false;
       }
       const lines = decodedText.split('\n');
@@ -620,7 +641,10 @@ export default {
     */
     handleFormatTxtToJson (decodedText) {
       if (decodedText.includes('#EXTINF') || decodedText.includes('#EXTM3U')) {
-        Toast('TXT格式源错误');
+        Toast({
+          message: 'TXT格式源错误',
+          className: this.isFullTransform ? 'toastTransform' : ''
+        });
         return false;
       }
       const lines = decodedText.split('\n');
@@ -1170,4 +1194,9 @@ export default {
   }
 }
 
+</style>
+<style>
+.toastTransform {
+  transform: rotate(90deg) !important;;
+}
 </style>
