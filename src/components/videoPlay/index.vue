@@ -105,9 +105,9 @@
           </div>
         </van-form>
       </van-popup>
-      <div class="custom-btn" v-if="isShowTopRightBtn">
-        <van-icon name="more" :size="30" color="#ffffff"  @click="handleMore" />
-      </div>
+<!--      <div class="custom-btn" v-if="isShowTopRightBtn">-->
+<!--        <van-icon name="more" :size="30" color="#ffffff"  @click="handleMore" />-->
+<!--      </div>-->
       <van-popup
           class="more-popup"
           v-model="showMore"
@@ -119,6 +119,15 @@
           <van-button plain type="info" @click="handleShowSetting">设置</van-button>
         </div>
       </van-popup>
+      <div class="custom-title">
+        <div class="title">
+          <van-icon name="arrow-left" :size="24" />
+          <span>{{activeItemText}}</span>
+        </div>
+        <div class="more">
+          <van-icon name="more" :size="30" color="#ffffff"  @click="handleMore" />
+        </div>
+      </div>
     </div>
 </template>
 <script>
@@ -136,7 +145,7 @@ export default {
     return {
       list: [],
       activeSource: '',
-      activeItemText: '',
+      activeItemText: '默认频道',
       activeItemIndex: null,
       isShowTopRightBtn: false,
       sourceMenuList: [],
@@ -235,20 +244,6 @@ export default {
       this.showList = !this.showList;
     },
     /**
-     * @Description 下拉菜单切换触发
-     * @author qianyinggenian
-     * @date 2024/01/17
-     */
-    handleDropdownMenu (val) {
-      this.showList = false;
-      this.showSetting = false;
-      if (val === '列表') {
-        this.showList = true;
-      } else if (val === '设置') {
-        this.showSetting = true;
-      }
-    },
-    /**
      * @Description 懒加载
      * @author qianyinggenian
      * @date 2024/01/17
@@ -262,7 +257,9 @@ export default {
 
         for (let i = 0; i < 10; i++) {
           const item = this.videoMenu[this.list.length];
-          // this.list.push(this.list.length + 1);
+          if (!item) {
+            break;
+          }
           this.list.push(item);
         }
         this.loading = false;
@@ -362,6 +359,7 @@ export default {
           } else if (['.m3u', '.m3u8'].includes(this.fileType)) {
             this.handleFormatM3u8ToJson(this.fileContent);
           } else if (['.txt'].includes(this.fileType)) {
+            console.log('fileContent', this.fileContent);
             this.handleFormatTxtToJson(this.fileContent);
           }
         }
@@ -467,7 +465,10 @@ export default {
                 id: generateRandomNumbers(),
                 url: trimmedLine
               };
-              jsonList[index].children.push(params);
+              const ind = jsonList[index].children.findIndex(item => item.url === trimmedLine);
+              if (ind === -1) {
+                jsonList[index].children.push(params);
+              }
             }
           }
         }
@@ -513,7 +514,10 @@ export default {
                 id: generateRandomNumbers(),
                 url: channelLink
               };
-              jsonList[index].children.push(params);
+              const ind = jsonList[index].children.findIndex(item => item.url === channelLink);
+              if (ind === -1) {
+                jsonList[index].children.push(params);
+              }
             }
           }
         }
@@ -730,8 +734,8 @@ export default {
      */
     closePopup () {
       this.showList = false;
-      this.activeItemText = '';
-      this.activeSource = '';
+      // this.activeItemText = '';
+      // this.activeSource = '';
     },
     /** 关闭设置弹窗触发
      * @param e
@@ -783,6 +787,7 @@ export default {
   .video-js {
     width: 100%;
     height: 100%;
+    background-color: #242424;
   }
   .custom-btn {
     display: block;
@@ -790,13 +795,43 @@ export default {
     top: 10px;
     right: 10px;
   }
+  .custom-title {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    display: flex;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    background-color: rgba(255,255,255, 0.2);
+    .title {
+      flex: 5;
+      flex-shrink: 0;
+      display: flex;
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+      align-items: center;
+      span {
+        margin-left: 5px;
+      }
+    }
+    .more {
+      flex: 1;
+      display: flex;
+      justify-content: flex-end;
+      flex-shrink: 0;
+    }
+  }
 }
 .more-popup {
-  height: 14%;
-  top: 7%;
+  height: 100%;
+  top: 50%;
   right:0 !important;
   left: auto !important;
   width: 25% !important;
+  background-color: rgba(255,255,255, 0.7);
   .more-btn {
     display: flex;
     padding: 10px;
