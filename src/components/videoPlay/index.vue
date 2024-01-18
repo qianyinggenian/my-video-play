@@ -36,10 +36,16 @@
           v-model="showList"
           round
           position="bottom"
-          :style="{ height: '50%' }"
+          :style="{ height: '70%' }"
           @close="closePopup"
       >
         <van-form @submit="onSubmit">
+          <van-search show-action v-model="searchValue" shape="square" @search="onSearch" placeholder="请输入搜索关键词">
+            <template #action>
+<!--              <div @click="onSearch">搜索</div>-->
+              <van-button plain size="small" type="info"  @click="onSearch">搜索</van-button>
+            </template>
+          </van-search>
           <div class="list-menu">
             <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
                 <van-list
@@ -158,6 +164,7 @@ export default {
       isShowTopRightBtn: false,
       sourceMenuList: [],
       dropdownMenuValue: '列表',
+      searchValue: '',
       loading: false,
       finished: false,
       refreshing: false,
@@ -430,7 +437,7 @@ export default {
     },
     /**
      * @Description 点击列表菜单项触发
-     * @author wangkangzhang
+     * @author qianyinggenian
      * @date 2024/01/17
     */
     handleVanCell (item, index) {
@@ -441,7 +448,7 @@ export default {
     },
     /**
      * @Description 点击源触发
-     * @author wangkangzhang
+     * @author qianyinggenian
      * @date 2024/01/17
     */
     handleSourceMenuVanCell (item) {
@@ -870,9 +877,18 @@ export default {
       }
       this.player.play();
     },
+
+    /**
+     * @Description 列表-搜索按钮触发
+     * @author qianyinggenian
+     * @date 2023/12/22
+     */
+    onSearch () {
+      console.log('searchValue', this.searchValue);
+    },
     /**
      * @Description 添加按钮
-     * @author wangkangzhang
+     * @author qianyinggenian
      * @date 2023/12/22
      */
     addButton () {
@@ -890,7 +906,7 @@ export default {
     },
     /**
      * @Description 添加按钮
-     * @author wangkangzhang
+     * @author qianyinggenian
      * @date 2023/12/22
      */
     addButtonFull () {
@@ -907,7 +923,7 @@ export default {
     },
     /**
      * @Description 添加按钮
-     * @author wangkangzhang
+     * @author qianyinggenian
      * @date 2023/12/22
      */
     addSettingBtn () {
@@ -1172,8 +1188,13 @@ export default {
       -webkit-flex: 1 !important;
     }
   }
+  .van-search__action {
+    display: flex;
+    align-items: center;
+    padding: 0 8px 0 0;
+  }
   .list-menu {
-    height: calc(100% - 76px) !important;
+    height: calc(100% - 76px - 54px) !important;
     display: flex;
     .van-pull-refresh {
       height: 100%;
