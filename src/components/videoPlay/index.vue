@@ -145,10 +145,6 @@ export default {
       activeItemIndex: null,
       isShowTopRightBtn: false,
       sourceMenuList: [],
-      option1: [
-        { text: '列表', value: '列表' },
-        { text: '设置', value: '设置' }
-      ],
       dropdownMenuValue: '列表',
       loading: false,
       finished: false,
@@ -370,7 +366,6 @@ export default {
           } else if (['.m3u', '.m3u8'].includes(this.fileType)) {
             this.handleFormatM3u8ToJson(this.fileContent);
           } else if (['.txt'].includes(this.fileType)) {
-            console.log('fileContent', this.fileContent);
             this.handleFormatTxtToJson(this.fileContent);
           }
         }
