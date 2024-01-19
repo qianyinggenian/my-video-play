@@ -42,7 +42,6 @@
         <van-form @submit="onSubmit">
           <van-search show-action v-model="searchValue" shape="square" @search="onSearch" placeholder="请输入搜索关键词">
             <template #action>
-<!--              <div @click="onSearch">搜索</div>-->
               <van-button plain size="small" type="info"  @click="onSearch">搜索</van-button>
             </template>
           </van-search>
@@ -188,6 +187,7 @@ export default {
       player: null,
       defaultList: defaultList,
       videoMenu: [],
+      searchList: [],
       fileType: '',
       fileContent: null,
       isFullTransform: false,
@@ -396,6 +396,23 @@ export default {
       this.showList = !this.showList;
     },
     /**
+     * @Description 列表-搜索按钮触发
+     * @author qianyinggenian
+     * @date 2023/12/22
+     */
+    onSearch () {
+      const searchValue = this.searchValue.toLowerCase();
+      const videoMenu = JSON.parse(JSON.parse(this.videoMenu));
+      this.searchList = videoMenu.filter(item => item.text.toLowerCase().includes(searchValue));
+      this.refreshing = true;
+      // 清空列表数据
+      this.finished = false;
+      // 重新加载数据
+      // 将 loading 设置为 true，表示处于加载状态
+      this.loading = true;
+      this.onLoad();
+    },
+    /**
      * @Description 懒加载
      * @author qianyinggenian
      * @date 2024/01/17
@@ -406,9 +423,9 @@ export default {
           this.list = [];
           this.refreshing = false;
         }
-
+        const videoMenu = this.searchValue ? this.searchList : this.videoMenu;
         for (let i = 0; i < 10; i++) {
-          const item = this.videoMenu[this.list.length];
+          const item = videoMenu[this.list.length];
           if (!item) {
             break;
           }
@@ -416,7 +433,7 @@ export default {
         }
         this.loading = false;
 
-        if (this.list.length >= this.videoMenu.length) {
+        if (this.list.length >= videoMenu.length) {
           this.finished = true;
         }
       }, 1000);
@@ -876,15 +893,6 @@ export default {
         this.player.load();
       }
       this.player.play();
-    },
-
-    /**
-     * @Description 列表-搜索按钮触发
-     * @author qianyinggenian
-     * @date 2023/12/22
-     */
-    onSearch () {
-      console.log('searchValue', this.searchValue);
     },
     /**
      * @Description 添加按钮
